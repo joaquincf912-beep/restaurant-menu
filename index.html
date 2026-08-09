@@ -431,16 +431,18 @@
             position: relative;
             height: 200px;
             overflow: hidden;
+            contain: strict;
+            background: var(--c-surface-2);
         }
         @media (min-width: 768px) { .card__img-wrap { height: 240px; } }
         .card__img {
             width: 100%; height: 100%;
             object-fit: cover;
-            transition: transform 0.6s var(--ease-out);
-            will-change: transform;
+            transition: transform 0.35s ease-out;
+            content-visibility: auto;
         }
         .card:hover .card__img, .card:active .card__img {
-            transform: scale(1.06);
+            transform: scale(1.04);
         }
         .card__img-overlay {
             position: absolute;
@@ -530,14 +532,13 @@
         /* Scroll reveal */
         .reveal {
             opacity: 0;
-            transform: translate3d(0, 20px, 0);
+            transform: translateY(20px);
             backface-visibility: hidden;
-            transition: opacity 0.55s var(--ease-out), transform 0.55s var(--ease-out);
-            will-change: opacity, transform;
+            transition: opacity 0.45s var(--ease-out), transform 0.45s var(--ease-out);
         }
         .reveal.visible {
             opacity: 1;
-            transform: translate3d(0, 0, 0);
+            transform: none;
         }
         .reveal-d1 { transition-delay: 0.06s; }
         .reveal-d2 { transition-delay: 0.12s; }
@@ -2715,7 +2716,7 @@
                         io.unobserve(e.target);
                     }
                 });
-            }, { threshold: 0.08, rootMargin: '0px 0px -30px 0px' });
+            }, { threshold: 0.05, rootMargin: '0px 0px -20px 0px' });
 
             $$('.reveal:not(.visible)').forEach(el => io.observe(el));
         }
