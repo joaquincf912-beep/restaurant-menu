@@ -1996,9 +1996,12 @@
 
                 <div class="sep-gold" style="margin-bottom: 20px;"></div>
 
-                <div class="modal__price-row" style="margin-bottom: 20px;">
-                    <span class="t-dim" style="font-size: 14px;">Total Estimado:</span>
-                    <span class="modal__price" id="cartTotalVal">$0</span>
+                <div style="margin-bottom: 20px;">
+                    <div style="display:flex;justify-content:space-between;align-items:baseline;">
+                        <span class="t-dim" style="font-size: 14px;">Total Estimado:</span>
+                        <span class="modal__price" id="cartTotalVal">$0</span>
+                    </div>
+                    <div id="cartTotalBs" style="text-align:right;margin-top:4px;font-family:var(--font-sans);font-size:15px;font-weight:600;color:var(--c-gold);letter-spacing:0.02em;"></div>
                 </div>
 
                 <button class="pairing-btn" id="cartSubmitBtn">
@@ -2580,6 +2583,7 @@
             cartTable:  $('#cartTableInput'),
             cartList:   $('#cartItemsList'),
             cartTotal:  $('#cartTotalVal'),
+            cartTotalBs:$('#cartTotalBs'),
             cartSubmit: $('#cartSubmitBtn'),
 
             navWaiter:  $('#navWaiterBtn'),
@@ -2976,7 +2980,8 @@
             
             if (activeItems.length === 0) {
                 dom.cartList.innerHTML = `<div class="t-dim" style="font-size:12px;text-align:center;padding:12px 0;">La orden está vacía.</div>`;
-                dom.cartTotal.innerHTML = `$0 <span style="font-size:13px;color:var(--c-text-2);margin-left:6px;">(0.00 Bs.)</span>`;
+                dom.cartTotal.textContent = '$0';
+                dom.cartTotalBs.textContent = '0,00 Bs.';
                 dom.cartSubmit.disabled = true;
                 dom.cartSubmit.style.opacity = 0.5;
                 return;
@@ -3011,7 +3016,8 @@
             dom.cartList.innerHTML = html;
             const tasa = parseFloat(localStorage.getItem('tasaBolivar') || '45.0');
             const totalBs = total * tasa;
-            dom.cartTotal.innerHTML = `<span style="font-size:18px;">$${total}</span> <span style="font-size:14px;color:var(--c-text-2);margin-left:8px;">(${totalBs.toFixed(2)} Bs.)</span>`;
+            dom.cartTotal.textContent = `$${total}`;
+            dom.cartTotalBs.textContent = `${totalBs.toLocaleString('es-VE', {minimumFractionDigits: 2, maximumFractionDigits: 2})} Bs.`;
 
             // Checkboxes event listeners
             $$('.cart-item__cb', dom.cartList).forEach(cb => {
