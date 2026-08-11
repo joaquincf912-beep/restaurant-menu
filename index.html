@@ -1685,6 +1685,38 @@
             margin: 14px -22px 0;
             background: var(--c-border);
         }
+
+        .service-card__btn {
+            margin-top: 14px;
+            width: 100%;
+            padding: 11px;
+            border-radius: 10px;
+            background: var(--c-gold-dim);
+            border: 1px solid var(--c-gold);
+            color: var(--c-gold);
+            font-weight: 500;
+            font-size: 13px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            transition: all 0.25s ease;
+            font-family: var(--font-sans);
+        }
+        .service-card__btn:hover {
+            background: var(--c-gold);
+            color: var(--c-bg);
+            transform: translateY(-1px);
+        }
+        .service-card__btn:active {
+            transform: translateY(0);
+        }
+
+        @keyframes successScale {
+            from { transform: scale(0.6); opacity: 0; }
+            to { transform: scale(1); opacity: 1; }
+        }
     </style>
 </head>
 
@@ -1995,6 +2027,67 @@
                 <button class="pairing-btn" id="waiterConfirmBtn" style="background: linear-gradient(135deg, #b85c6e, #9c3c50); color: white;">
                     Confirmar Llamado
                 </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ═══ CHEF RESERVATION MODAL ═══ -->
+    <div class="modal-overlay" id="chefModalOverlay" role="dialog" aria-modal="true" aria-labelledby="chefModalTitle">
+        <div class="modal" id="chefModal" style="max-width: 400px;">
+            <div class="modal__handle"></div>
+            <div class="modal__body" style="padding: 24px;">
+                <div class="modal__price-row" style="margin-bottom: 16px;">
+                    <h3 class="modal__title" id="chefModalTitle" style="font-family: var(--font-serif); font-size: 20px;">Reserva Menú del Chef</h3>
+                    <button class="modal__close" id="chefModalClose" style="position: static; transform: none;" aria-label="Cerrar">
+                        <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><line x1="2" y1="2" x2="12" y2="12"/><line x1="12" y1="2" x2="2" y2="12"/></svg>
+                    </button>
+                </div>
+                
+                <!-- Form State -->
+                <div id="chefFormState">
+                    <p class="modal__desc" style="margin-bottom: 20px;">Completa los datos para solicitar tu reserva del menú exclusivo de 5 tiempos.</p>
+                    
+                    <div class="form-group" style="margin-bottom: 14px;">
+                        <label class="form-label" for="chefNameInput">Nombre Completo</label>
+                        <input type="text" id="chefNameInput" class="form-input" placeholder="Ej. Juan Pérez" required>
+                    </div>
+                    
+                    <div class="form-group" style="margin-bottom: 14px;">
+                        <label class="form-label" for="chefPeopleInput">Número de Personas</label>
+                        <input type="number" id="chefPeopleInput" class="form-input" placeholder="Mínimo 2 personas" min="2" max="20" value="2" required>
+                    </div>
+
+                    <div class="form-group" style="margin-bottom: 14px;">
+                        <label class="form-label" for="chefDateInput">Fecha de la Reserva</label>
+                        <input type="date" id="chefDateInput" class="form-input" required>
+                    </div>
+
+                    <div class="form-group" style="margin-bottom: 20px;">
+                        <label class="form-label" for="chefTimeInput">Hora de la Reserva</label>
+                        <select id="chefTimeInput" class="form-input" required>
+                            <option value="12:30 PM">12:30 PM</option>
+                            <option value="1:30 PM">1:30 PM</option>
+                            <option value="2:30 PM">2:30 PM</option>
+                            <option value="7:30 PM">7:30 PM</option>
+                            <option value="8:30 PM">8:30 PM</option>
+                            <option value="9:30 PM">9:30 PM</option>
+                        </select>
+                    </div>
+                    
+                    <button class="pairing-btn" id="chefConfirmBtn" style="background: linear-gradient(135deg, var(--c-gold), #a37f24); color: white; width: 100%;">
+                        Confirmar Reserva por WhatsApp
+                    </button>
+                </div>
+
+                <!-- Success State -->
+                <div id="chefSuccessState" style="display: none; text-align: center; padding: 20px 0;">
+                    <div style="width: 64px; height: 64px; border-radius: 50%; background: rgba(52, 211, 153, 0.1); color: var(--c-emerald); display: flex; align-items: center; justify-content: center; margin: 0 auto 16px; animation: successScale 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) both;">
+                        <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+                    </div>
+                    <h4 style="font-family: var(--font-serif); font-size: 22px; color: var(--c-text); margin-bottom: 8px;">¡Gracias por tu reserva!</h4>
+                    <p style="font-size: 13.5px; color: var(--c-text-2); line-height: 1.6; margin-bottom: 12px;" id="chefSuccessMessage"></p>
+                    <p style="font-size: 12px; color: var(--c-gold); font-weight: 500;">Redirigiéndote a WhatsApp para confirmarla...</p>
+                </div>
             </div>
         </div>
     </div>
@@ -2494,6 +2587,18 @@
             waiterClose:$('#waiterModalClose'),
             waiterTable:$('#waiterTableInput'),
             waiterConfirm:$('#waiterConfirmBtn'),
+
+            // Chef Reservation Modal
+            chefOverlay: $('#chefModalOverlay'),
+            chefClose:   $('#chefModalClose'),
+            chefName:    $('#chefNameInput'),
+            chefPeople:  $('#chefPeopleInput'),
+            chefDate:    $('#chefDateInput'),
+            chefTime:    $('#chefTimeInput'),
+            chefConfirm: $('#chefConfirmBtn'),
+            chefForm:    $('#chefFormState'),
+            chefSuccess: $('#chefSuccessState'),
+            chefSuccessMsg: $('#chefSuccessMessage'),
         };
 
         /* ══════════════════════════════════
@@ -2842,6 +2947,11 @@
             dom.waiterClose.addEventListener('click', closeWaiterModal);
             dom.waiterOverlay.addEventListener('click', e => { if (e.target === dom.waiterOverlay) closeWaiterModal(); });
             dom.waiterConfirm.addEventListener('click', confirmWaiterCall);
+
+            // Chef Reservation buttons
+            dom.chefClose.addEventListener('click', closeChefReservationModal);
+            dom.chefOverlay.addEventListener('click', e => { if (e.target === dom.chefOverlay) closeChefReservationModal(); });
+            dom.chefConfirm.addEventListener('click', confirmChefReservation);
         }
 
         function updateCartBadge() {
@@ -2970,6 +3080,85 @@
         /* ── WAITER CALL ── */
         function handleWaiterCall() {
             openWaiterModal();
+        }
+
+        /* ── CHEF RESERVATION SYSTEM ── */
+        function openChefReservationModal() {
+            const today = new Date();
+            const tomorrow = new Date(today);
+            tomorrow.setDate(tomorrow.getDate() + 1);
+            dom.chefDate.value = tomorrow.toISOString().split('T')[0];
+            dom.chefDate.min = today.toISOString().split('T')[0];
+
+            dom.chefName.value = '';
+            dom.chefPeople.value = '2';
+            dom.chefForm.style.display = 'block';
+            dom.chefSuccess.style.display = 'none';
+
+            const servicesPanel = $('#servicesPanel');
+            if (servicesPanel) {
+                servicesPanel.classList.remove('open');
+            }
+
+            dom.chefOverlay.classList.add('open');
+            document.body.style.overflow = 'hidden';
+            dom.chefName.focus();
+        }
+
+        function closeChefReservationModal() {
+            dom.chefOverlay.classList.remove('open');
+            document.body.style.overflow = '';
+        }
+
+        function confirmChefReservation() {
+            const nameVal = dom.chefName.value.trim();
+            const peopleVal = dom.chefPeople.value.trim();
+            const dateVal = dom.chefDate.value.trim();
+            const timeVal = dom.chefTime.value.trim();
+
+            if (!nameVal) {
+                alert('Por favor, ingresa tu nombre completo.');
+                dom.chefName.focus();
+                return;
+            }
+            if (!peopleVal || parseInt(peopleVal, 10) < 2) {
+                alert('El número de personas debe ser mínimo 2.');
+                dom.chefPeople.focus();
+                return;
+            }
+            if (!dateVal) {
+                alert('Por favor, selecciona la fecha de la reserva.');
+                dom.chefDate.focus();
+                return;
+            }
+
+            dom.chefForm.style.display = 'none';
+            dom.chefSuccessMsg.innerHTML = `Hola <strong>${nameVal}</strong>, tu solicitud para <strong>${peopleVal} personas</strong> el día <strong>${formatDateString(dateVal)}</strong> a las <strong>${timeVal}</strong> ha sido preparada.`;
+            dom.chefSuccess.style.display = 'block';
+
+            const msg = `ROGASA CAFÉ - RESERVA DE EVENTOS\n\n` +
+                        `• Cliente: ${nameVal}\n` +
+                        `• Evento: Menú del Chef (5 tiempos)\n` +
+                        `• Personas: ${peopleVal}\n` +
+                        `• Fecha: ${formatDateString(dateVal)}\n` +
+                        `• Hora: ${timeVal}\n\n` +
+                        `Por favor, confirmen disponibilidad de mesa para esta fecha. ¡Muchas gracias!`;
+
+            const url = `https://api.whatsapp.com/send?phone=${WHATSAPP_NUMBER}&text=${encodeURIComponent(msg)}`;
+
+            setTimeout(() => {
+                window.open(url, '_blank');
+                closeChefReservationModal();
+            }, 3000);
+        }
+
+        function formatDateString(dateStr) {
+            try {
+                const parts = dateStr.split('-');
+                return `${parts[2]}/${parts[1]}/${parts[0]}`;
+            } catch (e) {
+                return dateStr;
+            }
         }
 
         function openWaiterModal() {
@@ -3384,10 +3573,24 @@
                             <span>${s.time}</span>
                         </div>
                         <p class="service-card__desc">${s.desc}</p>
+                        ${key === 'chef' ? `
+                        <button class="service-card__btn" id="chefReserveBtn">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+                            Reservar Menú del Chef con Reserva
+                        </button>
+                        ` : ''}
                         <div class="service-card__sep"></div>
                     </div>`;
                 });
                 servicesBody.innerHTML = html;
+
+                // Add event listener to the reservation button
+                const chefReserveBtn = $('#chefReserveBtn', servicesBody);
+                if (chefReserveBtn) {
+                    chefReserveBtn.addEventListener('click', () => {
+                        openChefReservationModal();
+                    });
+                }
             }
         }
 
