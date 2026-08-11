@@ -2976,7 +2976,7 @@
             
             if (activeItems.length === 0) {
                 dom.cartList.innerHTML = `<div class="t-dim" style="font-size:12px;text-align:center;padding:12px 0;">La orden está vacía.</div>`;
-                dom.cartTotal.textContent = '$0';
+                dom.cartTotal.innerHTML = `$0 <span style="font-size:13px;color:var(--c-text-2);margin-left:6px;">(0.00 Bs.)</span>`;
                 dom.cartSubmit.disabled = true;
                 dom.cartSubmit.style.opacity = 0.5;
                 return;
@@ -3009,7 +3009,9 @@
             });
 
             dom.cartList.innerHTML = html;
-            dom.cartTotal.textContent = `$${total}`;
+            const tasa = parseFloat(localStorage.getItem('tasaBolivar') || '45.0');
+            const totalBs = total * tasa;
+            dom.cartTotal.innerHTML = `<span style="font-size:18px;">$${total}</span> <span style="font-size:14px;color:var(--c-text-2);margin-left:8px;">(${totalBs.toFixed(2)} Bs.)</span>`;
 
             // Checkboxes event listeners
             $$('.cart-item__cb', dom.cartList).forEach(cb => {
@@ -3061,7 +3063,10 @@
                 total += priceNum * qty;
             });
 
-            orderText += `\nTotal Estimado: $${total}\n`;
+            const tasa = parseFloat(localStorage.getItem('tasaBolivar') || '45.0');
+            const totalBs = total * tasa;
+
+            orderText += `\nTotal Estimado: $${total} USD / ${totalBs.toFixed(2)} Bs. (Tasa: ${tasa.toFixed(2)} Bs./USD)\n`;
             orderText += `Gracias.`;
 
             // Reset cart
@@ -3311,6 +3316,19 @@
 
                 let html = '';
 
+                // ── SECTION 0: Tasa del Dólar (Bolívares) ──
+                const tasaVal = parseFloat(localStorage.getItem('tasaBolivar') || '45.0');
+                html += `<div class="admin-section" style="margin-bottom:20px;">`;
+                html += `<div class="admin-section__header">`;
+                html += `<div class="admin-section__icon admin-section__icon--soldout" style="background:var(--c-emerald)12;color:var(--c-emerald)"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="6" width="20" height="12" rx="2"/><circle cx="12" cy="12" r="2"/><path d="M6 12h.01M18 12h.01"/></svg></div>`;
+                html += `<div><p class="admin-section__label">Tasa del Dólar (Bs.)</p><p class="admin-section__desc">Definir el tipo de cambio del día</p></div>`;
+                html += `</div>`;
+                html += `<div style="padding: 16px 20px; display: flex; gap: 10px; align-items: center;">`;
+                html += `<input type="number" id="tasaInput" class="form-input" style="margin: 0; max-width: 150px; padding: 10px;" value="${tasaVal}" step="0.01" min="1" placeholder="Ej. 45.20">`;
+                html += `<button class="pairing-btn" id="tasaSaveBtn" style="margin: 0; background: var(--c-emerald); color: var(--c-bg); padding: 10px 16px; border-radius: 8px; font-weight: 600; cursor: pointer;">Guardar Tasa</button>`;
+                html += `</div>`;
+                html += `</div>`;
+
                 // ── SECTION 1: Disponibilidad (Sold Out) ──
                 html += `<div class="admin-section">`;
                 html += `<div class="admin-section__header">`;
@@ -3372,6 +3390,21 @@
                 html += `</div>`;
 
                 adminBody.innerHTML = html;
+
+                // Bind Tasa del Dolar Save Button
+                const tasaSaveBtn = $('#tasaSaveBtn', adminBody);
+                const tasaInput = $('#tasaInput', adminBody);
+                if (tasaSaveBtn && tasaInput) {
+                    tasaSaveBtn.addEventListener('click', () => {
+                        const newTasa = parseFloat(tasaInput.value);
+                        if (isNaN(newTasa) || newTasa <= 0) {
+                            alert('Por favor ingrese una tasa válida.');
+                            return;
+                        }
+                        localStorage.setItem('tasaBolivar', newTasa.toString());
+                        showToast(`Tasa del dólar actualizada a ${newTasa.toFixed(2)} Bs.`);
+                    });
+                }
 
                 // Bind sold-out toggle buttons
                 $$('[data-admin-id]', adminBody).forEach(btn => {
