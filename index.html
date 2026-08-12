@@ -1028,182 +1028,65 @@
         }
         .payment-card {
             display: flex;
-            flex-direction: column;
             align-items: center;
             justify-content: center;
-            gap: 6px;
-            padding: 14px 6px;
+            height: 44px;
             background: var(--c-surface-2);
-            border: 1.5px solid var(--c-border);
+            border: 1px solid var(--c-border);
             border-radius: var(--radius);
+            font-size: 12px;
+            font-weight: 500;
+            color: var(--c-text-2);
             transition: all 0.3s ease;
             text-align: center;
-        }
-        .payment-card__icon {
-            font-size: 22px;
-            line-height: 1;
-        }
-        .payment-card__label {
-            font-size: 11px;
-            font-weight: 600;
-            color: var(--c-text-2);
-            letter-spacing: 0.03em;
         }
         .payment-opt input:checked + .payment-card {
             border-color: var(--c-gold);
             background: var(--c-gold-dim);
-            box-shadow: 0 0 0 1px rgba(201,168,76,0.1), 0 4px 12px rgba(201,168,76,0.08);
-        }
-        .payment-opt input:checked + .payment-card .payment-card__label {
             color: var(--c-gold);
         }
-
-        /* Order Summary */
-        .order-summary {
+        .cart-items {
+            max-height: 200px;
+            overflow-y: auto;
             border: 1px solid var(--c-border);
             border-radius: var(--radius);
-            overflow: hidden;
+            padding: 4px 12px;
             background: var(--c-surface-2);
         }
-        .order-item {
+        .cart-item {
             display: flex;
             align-items: center;
             justify-content: space-between;
-            padding: 12px 16px;
+            padding: 12px 0;
             border-bottom: 1px solid var(--c-border);
         }
-        .order-item:last-child { border-bottom: none; }
-        .order-item__left {
+        .cart-item:last-child {
+            border-bottom: none;
+        }
+        .cart-item__left {
             display: flex;
             align-items: center;
             gap: 10px;
         }
-        .order-item__qty {
-            width: 24px; height: 24px;
-            border-radius: 6px;
-            background: var(--c-gold-dim);
-            color: var(--c-gold);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 11px;
-            font-weight: 700;
-            flex-shrink: 0;
-        }
-        .order-item__name {
-            font-size: 13.5px;
-            font-weight: 500;
-        }
-        .order-item__price {
-            font-size: 13.5px;
-            font-weight: 600;
-            color: var(--c-text-2);
-            white-space: nowrap;
-        }
-
-        /* Delivery Input Rows */
-        .delivery-row {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 10px;
-        }
-        .delivery-row .form-input {
-            margin-bottom: 0;
-        }
-
-        /* Delivery Section Labels */
-        .delivery-section {
-            margin-bottom: 18px;
-        }
-        .delivery-section__label {
-            font-size: 11px;
-            font-weight: 600;
-            text-transform: uppercase;
-            letter-spacing: 0.1em;
-            color: var(--c-text-3);
-            margin-bottom: 10px;
-        }
-
-        /* Delivery Submit */
-        .delivery-submit {
-            width: 100%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 10px;
-            padding: 16px;
-            border: none;
-            border-radius: 14px;
-            background: linear-gradient(135deg, #2d8e5e, #22704a);
-            color: white;
-            font-family: var(--font-sans);
-            font-size: 15px;
-            font-weight: 600;
+        .cart-item__cb {
+            accent-color: var(--c-gold);
+            width: 16px; height: 16px;
             cursor: pointer;
-            letter-spacing: 0.02em;
-            transition: all 0.25s ease;
-            box-shadow: 0 4px 16px rgba(45,142,94,0.2);
-            position: relative;
-            overflow: hidden;
         }
-        .delivery-submit::before {
-            content: '';
-            position: absolute;
-            inset: 0;
-            background: linear-gradient(135deg, rgba(255,255,255,0.08), transparent);
-            opacity: 0;
-            transition: opacity 0.25s;
-        }
-        .delivery-submit:hover {
-            transform: translateY(-1px);
-            box-shadow: 0 8px 28px rgba(45,142,94,0.3);
-        }
-        .delivery-submit:hover::before { opacity: 1; }
-        .delivery-submit:active {
-            transform: scale(0.98) translateY(0);
-        }
-
-        /* Delivery Sep */
-        .delivery-sep {
-            height: 1px;
-            background: linear-gradient(to right, transparent, var(--c-gold-dim), rgba(201,168,76,0.2), var(--c-gold-dim), transparent);
-            margin: 20px 0;
-        }
-
-        /* Delivery Success */
-        .delivery-success {
-            display: none;
-            text-align: center;
-            padding: 30px 0 10px;
-        }
-        .delivery-success.show { display: block; }
-        .delivery-success__icon {
-            width: 64px; height: 64px;
-            border-radius: 50%;
-            background: var(--c-emerald-d);
-            color: var(--c-emerald);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            margin: 0 auto 16px;
-            animation: successScale 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) both;
-        }
-        .delivery-success__title {
-            font-family: var(--font-serif);
-            font-size: 22px;
-            font-weight: 600;
-            margin-bottom: 8px;
-        }
-        .delivery-success__desc {
-            font-size: 13.5px;
-            color: var(--c-text-2);
-            line-height: 1.5;
-        }
-        .delivery-success__redirect {
-            font-size: 12px;
-            color: var(--c-gold);
+        .cart-item__name {
+            font-size: 13px;
             font-weight: 500;
-            margin-top: 12px;
+            color: var(--c-text);
+        }
+        .cart-item__qty {
+            font-size: 11px;
+            color: var(--c-text-3);
+            margin-left: 6px;
+        }
+        .cart-item__price {
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--c-gold);
         }
 
         /* ═══════════════════════════════════════
@@ -2079,13 +1962,39 @@
                     </button>
                 </div>
                 
-                <!-- Resumen del Pedido (Always visible) -->
-                <div class="form-group" style="margin-bottom: 16px;">
-                    <label class="form-label">Detalles de la Orden</label>
-                    <div class="cart-items" id="cartItemsList" style="max-height: 150px; overflow-y: auto; border: 1px solid var(--c-border); border-radius: var(--radius); padding: 4px 12px; background: var(--c-surface-2);">
+                <div class="form-group">
+                    <label class="form-label" for="cartTableInput">Número de Mesa</label>
+                    <input type="number" id="cartTableInput" class="form-input" placeholder="Ej. 12" min="1" required>
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label">Forma de Pago</label>
+                    <div class="payment-options">
+                        <label class="payment-opt">
+                            <input type="radio" name="cartPaymentMethod" value="Efectivo" checked>
+                            <span class="payment-card">Efectivo</span>
+                        </label>
+                        <label class="payment-opt">
+                            <input type="radio" name="cartPaymentMethod" value="Tarjeta">
+                            <span class="payment-card">Tarjeta</span>
+                        </label>
+                        <label class="payment-opt">
+                            <input type="radio" name="cartPaymentMethod" value="Transferencia">
+                            <span class="payment-card">Transferencia</span>
+                        </label>
+                    </div>
+                </div>
+
+                <div class="sep-gold" style="margin-bottom: 20px;"></div>
+
+                <div class="form-group">
+                    <label class="form-label">Resumen de la Orden (Desmarque para remover)</label>
+                    <div class="cart-items" id="cartItemsList">
                         <!-- Injected by JS -->
                     </div>
                 </div>
+
+                <div class="sep-gold" style="margin-bottom: 20px;"></div>
 
                 <div style="margin-bottom: 20px;">
                     <div style="display:flex;justify-content:space-between;align-items:baseline;">
@@ -2095,138 +2004,9 @@
                     <div id="cartTotalBs" style="text-align:right;margin-top:4px;font-family:var(--font-sans);font-size:15px;font-weight:600;color:var(--c-gold);letter-spacing:0.02em;"></div>
                 </div>
 
-                <div class="sep-gold" style="margin-bottom: 20px;"></div>
-
-                <!-- MESA STATE PANEL -->
-                <div id="cartMesaPanel">
-                    <div class="form-group" style="margin-bottom: 16px;">
-                        <label class="form-label" for="cartTableInput">Número de Mesa</label>
-                        <input type="number" id="cartTableInput" class="form-input" placeholder="Ej. 12" min="1">
-                    </div>
-                    
-                    <div class="form-group" style="margin-bottom: 20px;">
-                        <label class="form-label">Forma de Pago</label>
-                        <div class="payment-options">
-                            <label class="payment-opt">
-                                <input type="radio" name="cartPaymentMethod" value="Efectivo" checked>
-                                <span class="payment-card">Efectivo</span>
-                            </label>
-                            <label class="payment-opt">
-                                <input type="radio" name="cartPaymentMethod" value="Tarjeta">
-                                <span class="payment-card">Tarjeta</span>
-                            </label>
-                            <label class="payment-opt">
-                                <input type="radio" name="cartPaymentMethod" value="Transferencia">
-                                <span class="payment-card">Transferencia</span>
-                            </label>
-                        </div>
-                    </div>
-
-                    <div style="display: flex; gap: 10px;">
-                        <button class="pairing-btn" id="cartSubmitBtn" style="flex: 1.2; margin: 0; background: linear-gradient(135deg, var(--c-gold), #a37f24); color: white;">
-                            Enviar Pedido (Mesa)
-                        </button>
-                        <button class="pairing-btn" id="cartToDlvBtn" style="flex: 0.8; margin: 0; background: var(--c-surface-2); border: 1px solid var(--c-border); color: var(--c-text-2);">
-                            Domicilio
-                        </button>
-                    </div>
-                </div>
-
-                <!-- DOMICILIO STATE PANEL (Hidden by default) -->
-                <div id="cartDlvPanel" style="display: none;">
-                    <div class="delivery-section">
-                        <p class="delivery-section__label">Datos del Cliente</p>
-                        <input type="text" class="form-input" id="cartNameInput" placeholder="Nombre completo" style="margin-bottom: 10px;">
-                        <input type="tel" class="form-input" id="cartPhoneInput" placeholder="Número de teléfono">
-                    </div>
-
-                    <div class="delivery-section">
-                        <p class="delivery-section__label">Dirección de Entrega</p>
-                        <div class="delivery-row">
-                            <input type="text" class="form-input" id="cartBarrioInput" placeholder="Barrio / Sector">
-                            <input type="text" class="form-input" id="cartRefInput" placeholder="Referencia (Ej: portón negro)">
-                        </div>
-                    </div>
-
-                    <div class="delivery-section">
-                        <p class="delivery-section__label">Método de Pago</p>
-                        <div class="payment-options">
-                            <label class="payment-opt">
-                                <input type="radio" name="cartDlvPaymentMethod" value="Efectivo" checked>
-                                <span class="payment-card">Efectivo</span>
-                            </label>
-                            <label class="payment-opt">
-                                <input type="radio" name="cartDlvPaymentMethod" value="Transferencia">
-                                <span class="payment-card">Transferencia</span>
-                            </label>
-                            <label class="payment-opt">
-                                <input type="radio" name="cartDlvPaymentMethod" value="Zelle">
-                                <span class="payment-card">Zelle</span>
-                            </label>
-                        </div>
-                    </div>
-
-                    <div style="display: flex; gap: 10px; margin-top: 20px;">
-                        <button class="pairing-btn" id="cartToMesaBtn" style="flex: 0.8; margin: 0; background: var(--c-surface-2); border: 1px solid var(--c-border); color: var(--c-text-2);">
-                            Volver a Mesa
-                        </button>
-                        <button class="delivery-submit" id="cartDlvSubmitBtn" style="flex: 1.2; margin: 0;">
-                            Confirmar Domicilio
-                        </button>
-                    </div>
-                </div>
-
-                <!-- SUCCESS STATE PANEL (Hidden by default) -->
-                <div class="delivery-success" id="cartSuccessState">
-                    <div class="delivery-success__icon">
-                        <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
-                    </div>
-                    <h4 class="delivery-success__title">¡Pedido Confirmado!</h4>
-                    <p class="delivery-success__desc" id="cartSuccessMessage"></p>
-                    <p class="delivery-success__redirect">Redirigiéndote a WhatsApp...</p>
-                </div>
-            </div>
-        </div>
-    </div>"cartPaymentMethod" value="Efectivo" checked>
-                                <div class="payment-card">
-                                    <span class="payment-card__icon">💵</span>
-                                    <span class="payment-card__label">Efectivo</span>
-                                </div>
-                            </label>
-                            <label class="payment-opt">
-                                <input type="radio" name="cartPaymentMethod" value="Transferencia">
-                                <div class="payment-card">
-                                    <span class="payment-card__icon">🏦</span>
-                                    <span class="payment-card__label">Transferencia</span>
-                                </div>
-                            </label>
-                            <label class="payment-opt">
-                                <input type="radio" name="cartPaymentMethod" value="Zelle">
-                                <div class="payment-card">
-                                    <span class="payment-card__icon">📱</span>
-                                    <span class="payment-card__label">Zelle</span>
-                                </div>
-                            </label>
-                        </div>
-                    </div>
-
-                    <div class="delivery-sep"></div>
-
-                    <button class="delivery-submit" id="cartSubmitBtn">
-                        <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" style="margin-right: 4px;"><path d="M.057 24l1.687-6.163c-1.041-1.804-1.588-3.849-1.587-5.946.003-6.556 5.338-11.891 11.893-11.891 3.181.001 6.167 1.24 8.413 3.488 2.245 2.248 3.481 5.236 3.48 8.414-.003 6.557-5.338 11.892-11.893 11.892-1.99-.001-3.951-.5-5.688-1.448l-6.305 1.654zm6.597-3.807c1.676.995 3.276 1.591 5.392 1.592 5.448 0 9.886-4.434 9.889-9.885.002-5.462-4.415-9.89-9.881-9.892-5.452 0-9.887 4.434-9.889 9.884-.001 2.225.651 3.891 1.746 5.634l-.999 3.648 3.742-.981zm11.387-5.464c-.074-.124-.272-.198-.57-.347-.297-.149-1.758-.868-2.031-.967-.272-.099-.47-.149-.669.149-.198.297-.768.967-.941 1.165-.173.198-.347.223-.644.074-.297-.149-1.255-.462-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.297-.347.446-.521.151-.172.2-.296.3-.495.099-.198.05-.372-.025-.521-.075-.148-.669-1.611-.916-2.206-.242-.579-.487-.501-.669-.51l-.57-.01c-.198 0-.52.074-.792.372s-1.04 1.016-1.04 2.479 1.065 2.876 1.213 3.074c.149.198 2.095 3.2 5.076 4.487.709.306 1.263.489 1.694.626.712.226 1.36.194 1.872.118.571-.085 1.758-.719 2.006-1.413.248-.695.248-1.29.173-1.414z"/></svg>
-                        Confirmar Pedido por WhatsApp
-                    </button>
-                </div>
-
-                <!-- Success State -->
-                <div class="delivery-success" id="cartSuccessState">
-                    <div class="delivery-success__icon">
-                        <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
-                    </div>
-                    <h4 class="delivery-success__title">¡Pedido Confirmado!</h4>
-                    <p class="delivery-success__desc" id="cartSuccessMessage"></p>
-                    <p class="delivery-success__redirect">Redirigiéndote a WhatsApp...</p>
-                </div>
+                <button class="pairing-btn" id="cartSubmitBtn">
+                    Enviar Pedido por WhatsApp
+                </button>
             </div>
         </div>
     </div>
@@ -2800,27 +2580,11 @@
             cartOverlay:$('#cartModalOverlay'),
             cartModal:  $('#cartModal'),
             cartClose:  $('#cartModalClose'),
+            cartTable:  $('#cartTableInput'),
             cartList:   $('#cartItemsList'),
             cartTotal:  $('#cartTotalVal'),
             cartTotalBs:$('#cartTotalBs'),
             cartSubmit: $('#cartSubmitBtn'),
-
-            // Paneles de checkout
-            cartMesaPanel: $('#cartMesaPanel'),
-            cartDlvPanel:  $('#cartDlvPanel'),
-            cartToDlvBtn:  $('#cartToDlvBtn'),
-            cartToMesaBtn: $('#cartToMesaBtn'),
-            cartDlvSubmitBtn: $('#cartDlvSubmitBtn'),
-
-            // Campos de Domicilio
-            cartName:    $('#cartNameInput'),
-            cartPhone:   $('#cartPhoneInput'),
-            cartBarrio:  $('#cartBarrioInput'),
-            cartRef:     $('#cartRefInput'),
-            cartForm:    $('#cartFormState'),
-            cartSuccess: $('#cartSuccessState'),
-            cartSuccessMsg: $('#cartSuccessMessage'),
-            cartTable:   $('#cartTableInput'),
 
             navWaiter:  $('#navWaiterBtn'),
             waiterOverlay: $('#waiterModalOverlay'),
@@ -3181,9 +2945,6 @@
 
             // Submit order
             dom.cartSubmit.addEventListener('click', submitOrder);
-            dom.cartToDlvBtn.addEventListener('click', switchToDelivery);
-            dom.cartToMesaBtn.addEventListener('click', switchToMesa);
-            dom.cartDlvSubmitBtn.addEventListener('click', submitDeliveryOrder);
 
             // Waiter buttons
             dom.navWaiter.addEventListener('click', handleWaiterCall);
@@ -3205,24 +2966,6 @@
 
         function openCartModal() {
             renderCartList();
-            
-            // Populate form fields from localStorage
-            dom.cartName.value = localStorage.getItem('deliveryName') || '';
-            dom.cartPhone.value = localStorage.getItem('deliveryPhone') || '';
-            dom.cartBarrio.value = localStorage.getItem('deliveryBarrio') || '';
-            dom.cartRef.value = localStorage.getItem('deliveryRef') || '';
-
-            const savedTable = localStorage.getItem('tableNumber');
-            if (savedTable) {
-                dom.cartTable.value = savedTable;
-            } else {
-                dom.cartTable.value = '';
-            }
-
-            // Reset modal states to Mesa panel by default
-            switchToMesa();
-            dom.cartSuccess.classList.remove('show');
-
             dom.cartOverlay.classList.add('open');
             document.body.style.overflow = 'hidden';
         }
@@ -3230,16 +2973,6 @@
         function closeCartModal() {
             dom.cartOverlay.classList.remove('open');
             document.body.style.overflow = '';
-        }
-
-        function switchToDelivery() {
-            dom.cartMesaPanel.style.display = 'none';
-            dom.cartDlvPanel.style.display = 'block';
-        }
-
-        function switchToMesa() {
-            dom.cartDlvPanel.style.display = 'none';
-            dom.cartMesaPanel.style.display = 'block';
         }
 
         function renderCartList() {
@@ -3251,15 +2984,11 @@
                 dom.cartTotalBs.textContent = '0,00 Bs.';
                 dom.cartSubmit.disabled = true;
                 dom.cartSubmit.style.opacity = 0.5;
-                dom.cartDlvSubmitBtn.disabled = true;
-                dom.cartDlvSubmitBtn.style.opacity = 0.5;
                 return;
             }
 
             dom.cartSubmit.disabled = false;
             dom.cartSubmit.style.opacity = 1;
-            dom.cartDlvSubmitBtn.disabled = false;
-            dom.cartDlvSubmitBtn.style.opacity = 1;
 
             let total = 0;
             let html = '';
@@ -3304,7 +3033,6 @@
             });
         }
 
-        // Mesa WhatsApp Order
         function submitOrder() {
             const tableVal = dom.cartTable.value.trim();
             if (!tableVal) {
@@ -3316,157 +3044,48 @@
             localStorage.setItem('tableNumber', tableVal);
             dom.waiterTable.value = tableVal;
 
-            const checkedCbs = $$('.cart-item__cb:checked', dom.cartList);
-            if (checkedCbs.length === 0) {
+            const checkboxes = $$('.cart-item__cb:checked', dom.cartList);
+            if (checkboxes.length === 0) {
                 alert('Por favor, seleccione al menos un artículo para pedir.');
                 return;
             }
 
             const paymentVal = $('input[name="cartPaymentMethod"]:checked').value;
 
-            // Formatted plain text (no emojis, structured as requested)
-            let itemsText = '';
+            // Formatted plain text (no emojis)
+            let orderText = `ROGASA CAFE - NUEVO PEDIDO\n`;
+            orderText += `Mesa: ${tableVal}\n`;
+            orderText += `Forma de pago: ${paymentVal}\n\n`;
+            orderText += `Detalle del pedido:\n`;
+
             let total = 0;
-            checkedCbs.forEach(cb => {
+            checkboxes.forEach(cb => {
                 const id = parseInt(cb.dataset.itemId, 10);
                 const item = MENU.find(m => m.id === id);
                 if (!item) return;
                 const qty = cart[id];
                 const priceNum = parseInt(item.price.replace('$', ''), 10);
-                itemsText += `- ${qty}x ${item.name} (${item.price})\n`;
+                orderText += `- ${qty}x ${item.name} (${item.price} c/u)\n`;
                 total += priceNum * qty;
             });
 
             const tasa = parseFloat(localStorage.getItem('tasaBolivar') || '45.0');
             const totalBs = total * tasa;
 
-            let orderText = `*NUEVO PEDIDO - ROGASA CAFÉ*\n`;
-            orderText += `--------------------------\n`;
-            orderText += `*Mesa:* ${tableVal}\n`;
-            orderText += `--------------------------\n`;
-            orderText += `*Pedido:*\n`;
-            orderText += itemsText;
-            orderText += `--------------------------\n`;
-            orderText += `*Total Estimado:* $${total} USD / ${totalBs.toLocaleString('es-VE', {minimumFractionDigits: 2, maximumFractionDigits: 2})} Bs.\n`;
-            orderText += `*Método de Pago:* ${paymentVal}`;
+            orderText += `\nTotal Estimado: $${total} USD / ${totalBs.toFixed(2)} Bs. (Tasa: ${tasa.toFixed(2)} Bs./USD)\n`;
+            orderText += `Gracias.`;
 
             // Reset cart
             cart = {};
             localStorage.removeItem('cart');
             updateCartBadge();
-
-            // Success state animation
-            dom.cartMesaPanel.style.display = 'none';
-            dom.cartSuccessMsg.innerHTML = `Pedido para la mesa <strong>${tableVal}</strong> listo para enviar por WhatsApp.`;
-            dom.cartSuccess.classList.add('show');
+            closeCartModal();
 
             const url = `https://api.whatsapp.com/send?phone=${WHATSAPP_NUMBER}&text=${encodeURIComponent(orderText)}`;
-            
-            setTimeout(() => {
-                window.open(url, '_blank');
-                closeCartModal();
-            }, 2500);
-        }
+            window.open(url, '_blank');
 
-        // Delivery WhatsApp Order
-        function submitDeliveryOrder() {
-            const nameVal = dom.cartName.value.trim();
-            const phoneVal = dom.cartPhone.value.trim();
-            const barrioVal = dom.cartBarrio.value.trim();
-            const refVal = dom.cartRef.value.trim();
-            
-            const checkedCbs = $$('.cart-item__cb:checked', dom.cartList);
-            if (checkedCbs.length === 0) {
-                alert('Por favor, selecciona al menos un artículo para pedir.');
-                return;
-            }
-
-            if (!nameVal) {
-                alert('Por favor, ingresa tu nombre completo.');
-                dom.cartName.focus();
-                return;
-            }
-            if (!phoneVal) {
-                alert('Por favor, ingresa tu número de teléfono.');
-                dom.cartPhone.focus();
-                return;
-            }
-            if (!barrioVal) {
-                alert('Por favor, ingresa tu barrio o sector.');
-                dom.cartBarrio.focus();
-                return;
-            }
-
-            // Save to localStorage
-            localStorage.setItem('deliveryName', nameVal);
-            localStorage.setItem('deliveryPhone', phoneVal);
-            localStorage.setItem('deliveryBarrio', barrioVal);
-            localStorage.setItem('deliveryRef', refVal);
-
-            const paymentVal = $('input[name="cartDlvPaymentMethod"]:checked').value;
-
-            // Formatted delivery order
-            let itemsText = '';
-            let total = 0;
-            checkedCbs.forEach(cb => {
-                const id = parseInt(cb.dataset.itemId, 10);
-                const item = MENU.find(m => m.id === id);
-                if (!item) return;
-                const qty = cart[id];
-                const priceNum = parseInt(item.price.replace('$', ''), 10);
-                itemsText += `- ${qty}x ${item.name} (${item.price})\n`;
-                total += priceNum * qty;
-            });
-
-            const tasa = parseFloat(localStorage.getItem('tasaBolivar') || '45.0');
-            const totalBs = total * tasa;
-
-            const orderId = 'ord_' + Math.random().toString(36).substring(2, 8);
-            const TRACKING_BASE = window.location.origin + '/tracking';
-            const trackingLink = `${TRACKING_BASE}/pedido.html?id=${orderId}`;
-
-            // Create tracking record on production database server
-            fetch(`${TRACKING_BASE}/api/orders`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    id: orderId,
-                    cliente_nombre: nameVal,
-                    estado: 'recibido',
-                    creado_el: new Date().toISOString()
-                })
-            }).catch(err => console.error('Error al registrar pedido de tracking:', err));
-
-            let orderText = `*NUEVO PEDIDO - ROGASA CAFÉ*\n`;
-            orderText += `--------------------------\n`;
-            orderText += `*Cliente:* ${nameVal}\n`;
-            orderText += `*Teléfono:* ${phoneVal}\n`;
-            orderText += `*Ubicación:* ${barrioVal}${refVal ? ' - ' + refVal : ''}\n`;
-            orderText += `--------------------------\n`;
-            orderText += `*Pedido:*\n`;
-            orderText += itemsText;
-            orderText += `--------------------------\n`;
-            orderText += `*Total a Pagar:* $${total} USD / ${totalBs.toLocaleString('es-VE', {minimumFractionDigits: 2, maximumFractionDigits: 2})} Bs.\n`;
-            orderText += `*Método de Pago:* ${paymentVal}\n`;
-            orderText += `--------------------------\n`;
-            orderText += `*Seguimiento en Vivo:* ${trackingLink}`;
-
-            // Show success screen in modal
-            dom.cartDlvPanel.style.display = 'none';
-            dom.cartSuccessMsg.innerHTML = `<strong>${nameVal}</strong>, tu pedido de <strong>$${total}</strong> / <strong>${totalBs.toLocaleString('es-VE', {minimumFractionDigits: 2, maximumFractionDigits: 2})} Bs.</strong> ha sido confirmado.`;
-            dom.cartSuccess.classList.add('show');
-
-            const url = `https://api.whatsapp.com/send?phone=${WHATSAPP_NUMBER}&text=${encodeURIComponent(orderText)}`;
-
-            // Reset cart
-            cart = {};
-            localStorage.removeItem('cart');
-            updateCartBadge();
-
-            setTimeout(() => {
-                window.open(url, '_blank');
-                closeCartModal();
-            }, 3000);
+            // Show page notification to the user
+            showToast('Su pedido ya se va a realizar');
         }
 
         /* ── WAITER CALL ── */
