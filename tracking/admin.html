@@ -1,0 +1,403 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Panel de Cocina — Rogasa Café</title>
+    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;0,700;1,400&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --c-bg:        #08080a;
+            --c-surface:   #111114;
+            --c-surface-2: #18181c;
+            --c-border:    rgba(255,255,255,0.06);
+            --c-text:      #f0ede6;
+            --c-text-2:    #9a978e;
+            --c-text-3:    #5c5a54;
+            --c-gold:      #c9a84c;
+            --c-gold-dim:  rgba(201,168,76,0.12);
+            --c-emerald:   #4a9e75;
+            --c-emerald-d: rgba(74,158,117,0.15);
+            --font-serif:  'Cormorant Garamond', 'Georgia', serif;
+            --font-sans:   'Inter', system-ui, -apple-system, sans-serif;
+            --radius:      12px;
+            --radius-lg:   20px;
+        }
+
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            font-family: var(--font-sans);
+            background: var(--c-bg);
+            color: var(--c-text);
+            min-height: 100vh;
+            padding: 40px 20px;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+        }
+
+        /* Header */
+        .admin-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid var(--c-border);
+            padding-bottom: 24px;
+            margin-bottom: 32px;
+            flex-wrap: wrap;
+            gap: 16px;
+        }
+        .admin-header__title h1 {
+            font-family: var(--font-serif);
+            font-size: 32px;
+            font-weight: 600;
+            color: var(--c-gold);
+            letter-spacing: 0.02em;
+        }
+        .admin-header__title p {
+            font-size: 13px;
+            color: var(--c-text-2);
+        }
+
+        /* Order Creator Form */
+        .creator-form {
+            background: var(--c-surface);
+            border: 1px solid var(--c-border);
+            border-radius: var(--radius-lg);
+            padding: 20px 24px;
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            margin-bottom: 40px;
+            flex-wrap: wrap;
+        }
+        .creator-form__label {
+            font-size: 14px;
+            font-weight: 500;
+            color: var(--c-text-2);
+        }
+        .creator-form__input {
+            flex: 1;
+            min-width: 200px;
+            height: 46px;
+            background: var(--c-surface-2);
+            border: 1px solid var(--c-border);
+            border-radius: var(--radius);
+            padding: 0 16px;
+            color: var(--c-text);
+            font-family: var(--font-sans);
+            font-size: 14px;
+            outline: none;
+            transition: all 0.3s ease;
+        }
+        .creator-form__input:focus {
+            border-color: var(--c-gold);
+            box-shadow: 0 0 0 3px rgba(201,168,76,0.08);
+        }
+        .creator-form__btn {
+            height: 46px;
+            padding: 0 24px;
+            background: linear-gradient(135deg, var(--c-gold), #a37f24);
+            color: var(--c-bg);
+            border: none;
+            border-radius: var(--radius);
+            font-family: var(--font-sans);
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.25s ease;
+        }
+        .creator-form__btn:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(201,168,76,0.25);
+        }
+        .creator-form__btn:active {
+            transform: translateY(0);
+        }
+
+        /* Order Cards Grid */
+        .orders-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 20px;
+        }
+        .order-card {
+            background: var(--c-surface);
+            border: 1px solid var(--c-border);
+            border-radius: var(--radius-lg);
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+            position: relative;
+            transition: border-color 0.3s ease;
+        }
+        .order-card:hover {
+            border-color: rgba(201,168,76,0.2);
+        }
+        .order-card__header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+        }
+        .order-card__id {
+            font-family: monospace;
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--c-gold);
+            letter-spacing: 0.05em;
+        }
+        .order-card__time {
+            font-size: 11px;
+            color: var(--c-text-3);
+        }
+        .order-card__client {
+            font-size: 16px;
+            font-weight: 600;
+        }
+
+        /* Status Controls Grid */
+        .status-ctrls {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 6px;
+        }
+        .status-btn {
+            height: 36px;
+            border: 1px solid var(--c-border);
+            background: var(--c-surface-2);
+            color: var(--c-text-2);
+            font-family: var(--font-sans);
+            font-size: 11px;
+            font-weight: 600;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.25s ease;
+            text-transform: uppercase;
+            letter-spacing: 0.03em;
+        }
+        .status-btn:hover {
+            border-color: var(--c-text-3);
+            color: var(--c-text);
+        }
+        
+        /* Active Status Button Styles */
+        .status-btn.active[data-status="recibido"] {
+            background: var(--c-gold-dim);
+            border-color: var(--c-gold);
+            color: var(--c-gold);
+        }
+        .status-btn.active[data-status="en_preparacion"] {
+            background: rgba(196,136,58,0.12);
+            border-color: var(--c-warn);
+            color: var(--c-warn);
+        }
+        .status-btn.active[data-status="en_camino"] {
+            background: rgba(184,92,110,0.12);
+            border-color: var(--c-rose);
+            color: var(--c-rose);
+        }
+        .status-btn.active[data-status="entregado"] {
+            background: var(--c-emerald-d);
+            border-color: var(--c-emerald);
+            color: var(--c-emerald);
+        }
+
+        /* WhatsApp Button */
+        .wa-btn {
+            width: 100%;
+            height: 42px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            background: var(--c-emerald);
+            color: white;
+            border: none;
+            border-radius: var(--radius);
+            font-family: var(--font-sans);
+            font-size: 12.5px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.25s ease;
+        }
+        .wa-btn:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(74,158,117,0.3);
+        }
+        .wa-btn:active {
+            transform: translateY(0);
+        }
+        .wa-btn svg {
+            flex-shrink: 0;
+        }
+
+        /* Empty orders panel */
+        .empty-orders {
+            text-align: center;
+            padding: 80px 20px;
+            border: 1px dashed var(--c-border);
+            border-radius: var(--radius-lg);
+            color: var(--c-text-2);
+        }
+        .empty-orders__icon {
+            color: var(--c-gold);
+            margin-bottom: 12px;
+            opacity: 0.6;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <!-- Header -->
+        <div class="admin-header">
+            <div class="admin-header__title">
+                <h1>Cocina & Despacho</h1>
+                <p>Gestión de Pedidos en Tiempo Real</p>
+            </div>
+        </div>
+
+        <!-- Creator Form -->
+        <div class="creator-form">
+            <span class="creator-form__label">Crear Nuevo Pedido:</span>
+            <input type="text" class="creator-form__input" id="clientNameInput" placeholder="Nombre del cliente (Ej. María Gómez)">
+            <button class="creator-form__btn" id="createOrderBtn">+ Crear Pedido</button>
+        </div>
+
+        <!-- Orders Grid Container -->
+        <div id="ordersContainer">
+            <!-- Loader -->
+            <div class="empty-orders">
+                <div class="empty-orders__icon"><svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg></div>
+                <p>Cargando panel de control de pedidos...</p>
+            </div>
+        </div>
+    </div>
+
+    <script type="module">
+        import { db } from './db.js';
+
+        const clientNameInput = document.getElementById('clientNameInput');
+        const createOrderBtn = document.getElementById('createOrderBtn');
+        const ordersContainer = document.getElementById('ordersContainer');
+
+        let activeOrders = [];
+
+        async function init() {
+            // Load initial active orders
+            activeOrders = await db.obtenerPedidosActivos();
+            renderOrders();
+
+            // Setup real-time listener for orders update
+            db.suscribirATodosLosPedidos((updatedOrders) => {
+                activeOrders = updatedOrders;
+                renderOrders();
+            });
+
+            // Bind create button
+            createOrderBtn.addEventListener('click', createNewOrder);
+            clientNameInput.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter') createNewOrder();
+            });
+        }
+
+        async function createNewOrder() {
+            const name = clientNameInput.value.trim();
+            if (!name) {
+                alert('Por favor, ingresa el nombre del cliente.');
+                clientNameInput.focus();
+                return;
+            }
+
+            createOrderBtn.disabled = true;
+            createOrderBtn.textContent = 'Creando...';
+
+            await db.crearPedido(name);
+
+            clientNameInput.value = '';
+            createOrderBtn.disabled = false;
+            createOrderBtn.textContent = '+ Crear Pedido';
+        }
+
+        function renderOrders() {
+            if (activeOrders.length === 0) {
+                ordersContainer.innerHTML = `
+                    <div class="empty-orders">
+                        <div class="empty-orders__icon"><svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M9 5H2v7l6.29 6.29c.94.94 2.48.94 3.42 0l4.58-4.58c.94-.94.94-2.48 0-3.42L9 5z"/><path d="M6 9.01V9"/><path d="M15 5l6.3 6.3a2.4 2.4 0 0 1 0 3.4L17 19"/></svg></div>
+                        <p>No hay pedidos activos en este momento.</p>
+                    </div>
+                `;
+                return;
+            }
+
+            ordersContainer.innerHTML = `
+                <div class="orders-grid">
+                    ${activeOrders.map(order => {
+                        const time = new Date(order.creado_el).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+                        return `
+                            <div class="order-card" data-id="${order.id}">
+                                <div class="order-card__header">
+                                    <span class="order-card__id">${order.id}</span>
+                                    <span class="order-card__time">${time}</span>
+                                </div>
+                                <div class="order-card__client">${order.cliente_nombre}</div>
+                                
+                                <div class="status-ctrls">
+                                    <button class="status-btn ${order.estado === 'recibido' ? 'active' : ''}" data-status="recibido" data-id="${order.id}">Recibido</button>
+                                    <button class="status-btn ${order.estado === 'en_preparacion' ? 'active' : ''}" data-status="en_preparacion" data-id="${order.id}">Cocina</button>
+                                    <button class="status-btn ${order.estado === 'en_camino' ? 'active' : ''}" data-status="en_camino" data-id="${order.id}">Reparto</button>
+                                    <button class="status-btn ${order.estado === 'entregado' ? 'active' : ''}" data-status="entregado" data-id="${order.id}">Entregado</button>
+                                </div>
+
+                                <button class="wa-btn" data-id="${order.id}" data-name="${order.cliente_nombre}">
+                                    <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor"><path d="M.057 24l1.687-6.163c-1.041-1.804-1.588-3.849-1.587-5.946.003-6.556 5.338-11.891 11.893-11.891 3.181.001 6.167 1.24 8.413 3.488 2.245 2.248 3.481 5.236 3.48 8.414-.003 6.557-5.338 11.892-11.893 11.892-1.99-.001-3.951-.5-5.688-1.448l-6.305 1.654zm6.597-3.807c1.676.995 3.276 1.591 5.392 1.592 5.448 0 9.886-4.434 9.889-9.885.002-5.462-4.415-9.89-9.881-9.892-5.452 0-9.887 4.434-9.889 9.884-.001 2.225.651 3.891 1.746 5.634l-.999 3.648 3.742-.981zm11.387-5.464c-.074-.124-.272-.198-.57-.347-.297-.149-1.758-.868-2.031-.967-.272-.099-.47-.149-.669.149-.198.297-.768.967-.941 1.165-.173.198-.347.223-.644.074-.297-.149-1.255-.462-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.297-.347.446-.521.151-.172.2-.296.3-.495.099-.198.05-.372-.025-.521-.075-.148-.669-1.611-.916-2.206-.242-.579-.487-.501-.669-.51l-.57-.01c-.198 0-.52.074-.792.372s-1.04 1.016-1.04 2.479 1.065 2.876 1.213 3.074c.149.198 2.095 3.2 5.076 4.487.709.306 1.263.489 1.694.626.712.226 1.36.194 1.872.118.571-.085 1.758-.719 2.006-1.413.248-.695.248-1.29.173-1.414z"/></svg>
+                                    Enviar WhatsApp al Cliente
+                                </button>
+                            </div>
+                        `;
+                    }).join('')}
+                </div>
+            `;
+
+            // Bind change status buttons
+            ordersContainer.querySelectorAll('.status-btn').forEach(btn => {
+                btn.addEventListener('click', async () => {
+                    const id = btn.dataset.id;
+                    const status = btn.dataset.status;
+                    
+                    // Optimistic update of class
+                    const parent = btn.parentElement;
+                    parent.querySelectorAll('.status-btn').forEach(b => b.classList.remove('active'));
+                    btn.classList.add('active');
+
+                    await db.actualizarEstado(id, status);
+                });
+            });
+
+            // Bind WhatsApp dispatch button
+            ordersContainer.querySelectorAll('.wa-btn').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    const id = btn.dataset.id;
+                    const name = btn.dataset.name;
+
+                    // Dynamically calculate tracking link on the current host/port/path structure
+                    const pathUrl = window.location.origin + window.location.pathname.replace('admin.html', 'pedido.html');
+                    const trackingLink = `${pathUrl}?id=${id}`;
+
+                    const text = `¡Hola ${name}! Tu pedido ha sido registrado. Sigue la preparación en vivo aquí: ${trackingLink}`;
+                    const url = `https://api.whatsapp.com/send?text=${encodeURIComponent(text)}`;
+                    
+                    window.open(url, '_blank');
+                });
+            });
+        }
+
+        // Init
+        init();
+    </script>
+</body>
+</html>

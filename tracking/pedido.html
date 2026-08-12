@@ -1,0 +1,470 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Seguimiento de Pedido — Rogasa Café</title>
+    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;0,700;1,400&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --c-bg:        #08080a;
+            --c-surface:   #111114;
+            --c-surface-2: #18181c;
+            --c-border:    rgba(255,255,255,0.06);
+            --c-text:      #f0ede6;
+            --c-text-2:    #9a978e;
+            --c-text-3:    #5c5a54;
+            --c-gold:      #c9a84c;
+            --c-gold-dim:  rgba(201,168,76,0.1);
+            --c-emerald:   #4a9e75;
+            --font-serif:  'Cormorant Garamond', 'Georgia', serif;
+            --font-sans:   'Inter', system-ui, -apple-system, sans-serif;
+            --radius:      16px;
+        }
+
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+        
+        body {
+            font-family: var(--font-sans);
+            background: var(--c-bg);
+            color: var(--c-text);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 480px;
+            background: var(--c-surface);
+            border: 1px solid var(--c-border);
+            border-radius: 24px;
+            padding: 32px 24px;
+            box-shadow: 0 12px 40px rgba(0,0,0,0.6);
+            position: relative;
+            overflow: hidden;
+        }
+
+        /* Branding header */
+        .brand-header {
+            text-align: center;
+            margin-bottom: 32px;
+        }
+        .brand-header h1 {
+            font-family: var(--font-serif);
+            font-size: 26px;
+            font-weight: 600;
+            color: var(--c-gold);
+            letter-spacing: 0.02em;
+            margin-bottom: 6px;
+        }
+        .brand-header p {
+            font-size: 11px;
+            color: var(--c-text-2);
+            text-transform: uppercase;
+            letter-spacing: 0.15em;
+        }
+
+        /* Order Info card */
+        .order-card {
+            background: var(--c-surface-2);
+            border: 1px solid var(--c-border);
+            border-radius: var(--radius);
+            padding: 16px 20px;
+            margin-bottom: 32px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .order-card__id {
+            font-size: 13px;
+            color: var(--c-text-2);
+        }
+        .order-card__id span {
+            font-family: monospace;
+            color: var(--c-gold);
+            font-weight: 600;
+            font-size: 14px;
+            letter-spacing: 0.05em;
+        }
+        .order-card__client {
+            text-align: right;
+        }
+        .order-card__client-title {
+            font-size: 11px;
+            color: var(--c-text-3);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+        .order-card__client-name {
+            font-size: 14px;
+            font-weight: 500;
+        }
+
+        /* Live status header */
+        .status-header {
+            text-align: center;
+            margin-bottom: 36px;
+        }
+        /* Status ring is styled below */
+        .status-header__title {
+            font-family: var(--font-serif);
+            font-size: 24px;
+            font-weight: 600;
+            margin-bottom: 6px;
+        }
+        .status-header__desc {
+            font-size: 13.5px;
+            color: var(--c-text-2);
+        }
+
+        /* Visual progress stepper */
+        .stepper {
+            display: flex;
+            flex-direction: column;
+            position: relative;
+            padding-left: 36px;
+            gap: 28px;
+        }
+        
+        /* vertical progress line */
+        .stepper::before {
+            content: '';
+            position: absolute;
+            left: 11px;
+            top: 12px;
+            bottom: 12px;
+            width: 2px;
+            background: var(--c-surface-2);
+            z-index: 1;
+        }
+        .stepper__bar {
+            content: '';
+            position: absolute;
+            left: 11px;
+            top: 12px;
+            width: 2px;
+            background: var(--c-gold);
+            z-index: 2;
+            transition: height 0.5s ease;
+            height: 0%;
+        }
+
+        .step {
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+        }
+
+        /* Step dot indicator */
+        .step__dot {
+            position: absolute;
+            left: -36px;
+            top: 2px;
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            background: var(--c-surface);
+            border: 2px solid var(--c-surface-2);
+            z-index: 3;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s ease;
+            font-size: 10px;
+            font-weight: 600;
+            color: var(--c-text-3);
+        }
+
+        .step__label {
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--c-text-3);
+            transition: color 0.3s ease;
+        }
+        .step__desc {
+            font-size: 12px;
+            color: var(--c-text-3);
+            transition: color 0.3s ease;
+        }
+
+        /* Active / Completed state styles */
+        .step.completed .step__dot {
+            border-color: var(--c-gold);
+            background: var(--c-gold-dim);
+            color: var(--c-gold);
+        }
+        .step.completed .step__label {
+            color: var(--c-text);
+        }
+        .step.completed .step__desc {
+            color: var(--c-text-2);
+        }
+
+        .step.active .step__dot {
+            border-color: var(--c-gold);
+            background: var(--c-gold);
+            color: var(--c-bg);
+            box-shadow: 0 0 12px rgba(201, 168, 76, 0.4);
+        }
+        .step.active .step__label {
+            color: var(--c-gold);
+            font-size: 15px;
+        }
+        .step.active .step__desc {
+            color: var(--c-text);
+            font-weight: 500;
+        }
+
+        /* Pulsating gold status ring */
+        .status-ring {
+            position: relative;
+            width: 72px;
+            height: 72px;
+            margin: 0 auto 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .status-ring__dot {
+            width: 14px;
+            height: 14px;
+            border-radius: 50%;
+            background: var(--c-gold);
+            z-index: 2;
+        }
+        .status-ring__pulse {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            border: 2px solid var(--c-gold);
+            opacity: 0.8;
+            animation: ringPulse 2s infinite cubic-bezier(0.215, 0.610, 0.355, 1);
+            z-index: 1;
+        }
+        @keyframes ringPulse {
+            0% { transform: scale(0.3); opacity: 1; }
+            100% { transform: scale(1); opacity: 0; }
+        }
+
+        /* Error state screen */
+        .error-screen {
+            text-align: center;
+            padding: 40px 0;
+            display: none;
+        }
+        .error-screen__icon {
+            color: var(--c-rose);
+            margin-bottom: 16px;
+        }
+        .error-screen h3 {
+            font-family: var(--font-serif);
+            font-size: 22px;
+            margin-bottom: 8px;
+        }
+        .error-screen p {
+            font-size: 13.5px;
+            color: var(--c-text-2);
+        }
+
+        @keyframes statusPulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.08); }
+            100% { transform: scale(1); }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <!-- Main content view -->
+        <div id="mainView">
+            <div class="brand-header">
+                <h1>Rogasa Café</h1>
+                <p>Seguimiento en Vivo</p>
+            </div>
+
+            <!-- Order info bar -->
+            <div class="order-card">
+                <div class="order-card__id">
+                    Pedido: <span id="orderIdText">ord_------</span>
+                </div>
+                <div class="order-card__client">
+                    <p class="order-card__client-title">Cliente</p>
+                    <p class="order-card__client-name" id="clientNameText">---</p>
+                </div>
+            </div>
+
+            <!-- Status Header -->
+            <div class="status-header">
+                <div class="status-ring">
+                    <div class="status-ring__pulse"></div>
+                    <div class="status-ring__dot"></div>
+                </div>
+                <h2 class="status-header__title" id="statusTitle">Cargando pedido...</h2>
+                <p class="status-header__desc" id="statusDesc">Por favor, espera un momento.</p>
+            </div>
+
+            <!-- Visual Stepper -->
+            <div class="stepper">
+                <div class="stepper__bar" id="progressBar"></div>
+                
+                <div class="step" id="step-recibido">
+                    <div class="step__dot">1</div>
+                    <span class="step__label">Pedido Recibido</span>
+                    <span class="step__desc">Hemos recibido tu orden correctamente</span>
+                </div>
+
+                <div class="step" id="step-en_preparacion">
+                    <div class="step__dot">2</div>
+                    <span class="step__label">En Preparación</span>
+                    <span class="step__desc">El chef está preparando tu pedido</span>
+                </div>
+
+                <div class="step" id="step-en_camino">
+                    <div class="step__dot">3</div>
+                    <span class="step__label">En Camino</span>
+                    <span class="step__desc">Tu pedido va en camino a tu dirección</span>
+                </div>
+
+                <div class="step" id="step-entregado">
+                    <div class="step__dot">4</div>
+                    <span class="step__label">Entregado</span>
+                    <span class="step__desc">¡Buen provecho! Disfruta de tu orden</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Error view -->
+        <div class="error-screen" id="errorView">
+            <div class="error-screen__icon"><svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg></div>
+            <h3>Pedido no encontrado</h3>
+            <p>El código de seguimiento no es válido o el pedido ya fue finalizado.</p>
+        </div>
+    </div>
+
+    <script type="module">
+        import { db } from './db.js';
+
+        // Read order ID from URL (?id=ord_XXXXXX)
+        const params = new URLSearchParams(window.location.search);
+        const orderId = params.get('id');
+        const dom = {
+            mainView: document.getElementById('mainView'),
+            errorView: document.getElementById('errorView'),
+            orderIdText: document.getElementById('orderIdText'),
+            clientNameText: document.getElementById('clientNameText'),
+            statusTitle: document.getElementById('statusTitle'),
+            statusDesc: document.getElementById('statusDesc'),
+            progressBar: document.getElementById('progressBar'),
+            steps: {
+                'recibido': document.getElementById('step-recibido'),
+                'en_preparacion': document.getElementById('step-en_preparacion'),
+                'en_camino': document.getElementById('step-en_camino'),
+                'entregado': document.getElementById('step-entregado')
+            }
+        };
+
+        const statesConfig = {
+            'recibido': {
+                index: 0,
+                title: '¡Orden recibida!',
+                desc: 'Hemos ingresado tu orden y pronto pasará a cocina.',
+                lineHeight: '0%'
+            },
+            'en_preparacion': {
+                index: 1,
+                title: 'En preparación',
+                desc: 'El chef está preparando tu pedido con ingredientes frescos.',
+                lineHeight: '33%'
+            },
+            'en_camino': {
+                index: 2,
+                title: 'Pedido en camino',
+                desc: '¡Tu pedido va en camino! Prepárate para recibirlo.',
+                lineHeight: '66%'
+            },
+            'entregado': {
+                index: 3,
+                title: 'Pedido entregado',
+                desc: '¡Buen provecho! Gracias por elegir a Rogasa Café.',
+                lineHeight: '100%'
+            }
+        };
+
+        async function init() {
+            let currentId = orderId;
+            if (!currentId || currentId === 'TU_ID_UNICO') {
+                currentId = 'ord_demo';
+                // Update URL parameter without reloading
+                const newurl = window.location.protocol + "//" + window.location.host + window.location.pathname + '?id=' + currentId;
+                window.history.pushState({path:newurl},'',newurl);
+            }
+
+            // Retrieve initial order details
+            let order = await db.obtenerPedido(currentId);
+            if (!order || order.error) {
+                // Auto create the order so it never fails!
+                order = await db.crearPedidoConId(currentId, 'Cliente de Prueba');
+            }
+
+            dom.orderIdText.textContent = order.id;
+            dom.clientNameText.textContent = order.cliente_nombre || 'Cliente';
+            updateUI(order);
+
+            // Connect to database updates in real time
+            db.suscribirAPedido(currentId, (updatedOrder) => {
+                if (updatedOrder) {
+                    updateUI(updatedOrder);
+                }
+            });
+        }
+
+        function updateUI(order) {
+            const currentStatus = order.estado;
+            const config = statesConfig[currentStatus];
+            if (!config) return;
+
+            // Update top status bar card
+            dom.statusTitle.textContent = config.title;
+            dom.statusDesc.textContent = config.desc;
+            dom.progressBar.style.height = config.lineHeight;
+
+            // Update stepper active and completed classes
+            const statesKeys = ['recibido', 'en_preparacion', 'en_camino', 'entregado'];
+            const currentIndex = config.index;
+
+            statesKeys.forEach((key, index) => {
+                const stepEl = dom.steps[key];
+                if (!stepEl) return;
+
+                const dotEl = stepEl.querySelector('.step__dot');
+                stepEl.classList.remove('active', 'completed');
+
+                if (index < currentIndex) {
+                    stepEl.classList.add('completed');
+                    dotEl.innerHTML = '<svg width="10" height="8" viewBox="0 0 12 10" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="1.5 6 4.5 9 10.5 2"/></svg>';
+                } else if (index === currentIndex) {
+                    stepEl.classList.add('active');
+                    dotEl.textContent = index + 1;
+                } else {
+                    dotEl.textContent = index + 1;
+                }
+            });
+        }
+
+        function showError() {
+            dom.mainView.style.display = 'none';
+            dom.errorView.style.display = 'block';
+        }
+
+        // Run
+        init();
+    </script>
+</body>
+</html>
