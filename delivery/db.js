@@ -1,8 +1,5 @@
 // db.js — Firebase Realtime Database para Rogasa Café Delivery
-// Sincronización en tiempo real entre clientes y cocina
-
-import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
-import { getDatabase, ref, set, get, child, onValue, update } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js';
+// Sincronización en tiempo real compatible con todos los navegadores móviles (Safari/iOS)
 
 const firebaseConfig = {
     apiKey: "AIzaSyDViZSKtfnEVnDL1GEF4iOl9kUp043Y3mw",
@@ -14,8 +11,15 @@ const firebaseConfig = {
     appId: "1:67005464439:web:7ce4db453342c3f4e6ab72"
 };
 
-const app = initializeApp(firebaseConfig);
-const database = getDatabase(app);
+// Initialize Firebase using global window.firebase
+const firebase = window.firebase;
+let app;
+if (!firebase.apps.length) {
+    app = firebase.initializeApp(firebaseConfig);
+} else {
+    app = firebase.app();
+}
+const database = firebase.database();
 
 export const db = {
 
@@ -38,7 +42,7 @@ export const db = {
         };
 
         try {
-            await set(ref(database, 'orders/' + nuevoPedido.id), nuevoPedido);
+            await database.ref('orders/' + nuevoPedido.id).set(nuevoPedido);
         } catch (e) {
             console.error('Firebase write error:', e);
         }
@@ -48,7 +52,7 @@ export const db = {
 
     async obtenerPedido(id) {
         try {
-            const snapshot = await get(child(ref(database), 'orders/' + id));
+            const snapshot = await database.ref('orders/' + id).get();
             if (snapshot.exists()) return snapshot.val();
         } catch (e) {
             console.error('Firebase read error:', e);
@@ -58,7 +62,7 @@ export const db = {
 
     async obtenerPedidosActivos() {
         try {
-            const snapshot = await get(ref(database, 'orders'));
+            const snapshot = await database.ref('orders').get();
             if (snapshot.exists()) return Object.values(snapshot.val());
         } catch (e) {
             console.error('Firebase read error:', e);
@@ -68,8 +72,8 @@ export const db = {
 
     async actualizarEstado(id, nuevoEstado) {
         try {
-            await update(ref(database, 'orders/' + id), { estado: nuevoEstado });
-            const snapshot = await get(ref(database, 'orders/' + id));
+            await database.ref('orders/' + id).update({ estado: nuevoEstado });
+            const snapshot = await database.ref('orders/' + id).get();
             return snapshot.exists() ? snapshot.val() : null;
         } catch (e) {
             console.error('Firebase update error:', e);
@@ -78,22 +82,24 @@ export const db = {
     },
 
     suscribirAPedido(id, callback) {
-        const orderRef = ref(database, 'orders/' + id);
-        return onValue(orderRef, (snapshot) => {
+        const orderRef = database.ref('orders/' + id);
+        orderRef.on('value', (snapshot) => {
             if (snapshot.exists()) {
                 callback(snapshot.val());
             }
         });
+        return () => orderRef.off('value');
     },
 
     suscribirATodosLosPedidos(callback) {
-        const ordersRef = ref(database, 'orders');
-        return onValue(ordersRef, (snapshot) => {
+        const ordersRef = database.ref('orders');
+        ordersRef.on('value', (snapshot) => {
             if (snapshot.exists()) {
                 callback(Object.values(snapshot.val()));
             } else {
                 callback([]);
             }
         });
+        return () => ordersRef.off('value');
     }
 };
