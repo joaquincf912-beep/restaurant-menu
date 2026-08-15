@@ -498,32 +498,7 @@
       flex-shrink: 0;
       margin-right: 12px;
     }
-    .dish-cals-badge {
-      position: absolute;
-      top: -4px;
-      right: -4px;
-      width: 28px;
-      height: 28px;
-      border-radius: 50%;
-      background: rgba(17, 17, 20, 0.9);
-      border: 1.5px solid var(--c-gold);
-      color: var(--c-gold);
-      font-size: 8px;
-      font-weight: 700;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      line-height: 0.9;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.6);
-      font-family: var(--font-sans);
-    }
-    .dish-cals-badge span {
-      font-size: 6px;
-      font-weight: 400;
-      color: var(--c-text-3);
-      text-transform: uppercase;
-    }
+
 
     /* INGREDIENTS & DESCRIPTIONS */
     .dish-desc {
@@ -787,10 +762,7 @@
   <div class="bottom-sheet" id="sheet-dish">
     <div class="sheet-handle"></div>
     <div class="sheet-content">
-      <div style="position:relative">
-        <img src="" class="sheet-img" id="sd-img">
-        <div class="dish-cals-badge" id="sd-cals" style="top:10px; right:10px; width:36px; height:36px; font-size:10px;"></div>
-      </div>
+      <img src="" class="sheet-img" id="sd-img">
       <div class="sheet-title" id="sd-name"></div>
       <div class="sheet-desc" id="sd-desc"></div>
       
@@ -1182,13 +1154,7 @@
       const sold = isSoldOut(d.id);
       return `
         <div class="fav-card ${sold ? 'sold-out' : ''}" onclick="${sold ? '' : `openDishSheet(${d.id})`}">
-          <div style="position:relative">
-            <img src="${d.img}" class="fav-img">
-            <div class="dish-cals-badge" style="top:4px; right:4px; width:26px; height:26px; font-size:7px;">
-              ${d.cals}
-              <span style="font-size:5px">kcal</span>
-            </div>
-          </div>
+          <img src="${d.img}" class="fav-img">
           <div class="fav-info">
             <div class="fav-name">${d.name}</div>
             <div class="fav-price">$${d.price}</div>
@@ -1218,13 +1184,7 @@
       const sold = isSoldOut(d.id);
       return `
         <div class="dish-card ${sold ? 'sold-out' : ''}" onclick="${sold ? '' : `openDishSheet(${d.id})`}">
-          <div class="dish-img-wrapper">
-            <img src="${d.img}" class="dish-img">
-            <div class="dish-cals-badge">
-              ${d.cals}
-              <span>kcal</span>
-            </div>
-          </div>
+          <img src="${d.img}" class="dish-img">
           <div class="dish-info">
             <div class="dish-name">${d.name}</div>
             <div class="dish-cat">${d.cat}</div>
@@ -1273,7 +1233,7 @@
     const ingCont = document.getElementById('sd-ingredients');
     ingCont.innerHTML = d.ingredients.map(ing => `<span class="ing-tag">${ing}</span>`).join('');
     
-    document.getElementById('sd-cals').innerHTML = `${d.cals} <span>kcal</span>`;
+
 
     // Reset pairing result
     document.getElementById('sd-pairing-btn').style.display = 'flex';
