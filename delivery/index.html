@@ -1067,7 +1067,32 @@
     state.trackingId = pedido.id;
     localStorage.setItem('last_delivery_tracking_id', state.trackingId);
     
-    let msg = `*Nuevo Pedido Rogasa*\nID: ${pedido.id}\nCliente: ${name}\nTotal: $${totalUsd.toFixed(2)}\n\n`;
+    const payLabels = {efectivo:'Efectivo',transferencia:'Transferencia Bancaria',zelle:'Zelle'};
+    const trackUrl = `https://traccionweb.com/domicilios?id=${pedido.id}`;
+    let msg = `*ROGASA CAFE — Pedido a Domicilio*\n`;
+    msg += `━━━━━━━━━━━━━━━━━━━━━━━━\n`;
+    msg += `*Pedido:* ${pedido.id}\n`;
+    msg += `*Cliente:* ${name}\n`;
+    msg += `*Telefono:* ${phone}\n`;
+    msg += `*Direccion:* ${sector}${ref ? ' — ' + ref : ''}\n`;
+    msg += `━━━━━━━━━━━━━━━━━━━━━━━━\n`;
+    msg += `*Detalle del Pedido:*\n\n`;
+    state.cart.forEach(i => {
+      const lineUsd = (i.price * i.q).toFixed(2);
+      const lineBs = (i.price * i.q * state.tasa).toFixed(2);
+      msg += `  ${i.q}x ${i.name}\n`;
+      msg += `     $${lineUsd} / Bs. ${lineBs}\n\n`;
+    });
+    msg += `━━━━━━━━━━━━━━━━━━━━━━━━\n`;
+    const subtotalUsd = totalUsd - 2;
+    msg += `*Subtotal:*  $${subtotalUsd.toFixed(2)} / Bs. ${(subtotalUsd * state.tasa).toFixed(2)}\n`;
+    msg += `*Delivery:*  $2.00 / Bs. ${(2 * state.tasa).toFixed(2)}\n`;
+    msg += `*TOTAL:*  *$${totalUsd.toFixed(2)}* / *Bs. ${(totalUsd * state.tasa).toFixed(2)}*\n`;
+    msg += `━━━━━━━━━━━━━━━━━━━━━━━━\n`;
+    msg += `*Metodo de Pago:* ${payLabels[state.payMethod] || state.payMethod}\n`;
+    msg += `*Tasa del dia:* Bs. ${state.tasa.toFixed(2)} / $1\n\n`;
+    msg += `Sigue tu pedido en vivo:\n${trackUrl}\n\n`;
+    msg += `Rogasa Cafe — Gracias por tu preferencia.`;
     window.open(`https://wa.me/${WHATSAPP_NUM}?text=${encodeURIComponent(msg)}`, '_blank');
     
     switchTab('seguimiento');
@@ -1186,7 +1211,20 @@
   }
 
   function sendWhatsAppUpdate(phone, id, status) {
-    let msg = `Hola! Te actualizamos sobre tu pedido Rogasa (${id}):\nEl estado actual es: *${status.toUpperCase()}*.\nPuedes hacer seguimiento aquí: ${window.location.origin}${window.location.pathname}?id=${id}`;
+    const statusLabels = {
+      recibido: 'Recibido — Tu pedido ha sido confirmado',
+      cocina: 'En Cocina — Estamos preparando tu pedido',
+      reparto: 'En Camino — El repartidor se dirige a tu ubicacion',
+      entregado: 'Entregado — Tu pedido ha sido entregado'
+    };
+    const trackUrl = `https://traccionweb.com/domicilios?id=${id}`;
+    let msg = `*ROGASA CAFE*\n`;
+    msg += `━━━━━━━━━━━━━━━━━━━━━━━━\n`;
+    msg += `*Actualizacion de Pedido*\n\n`;
+    msg += `*Pedido:* ${id}\n`;
+    msg += `*Estado:* ${statusLabels[status] || status}\n\n`;
+    msg += `Sigue tu pedido en vivo:\n${trackUrl}\n\n`;
+    msg += `Rogasa Cafe — Gracias por tu preferencia.`;
     let cleanPhone = phone.replace(/\D/g, '');
     window.open(`https://wa.me/${cleanPhone}?text=${encodeURIComponent(msg)}`, '_blank');
   }
