@@ -485,6 +485,111 @@
     .empty-state svg { width: 48px; height: 48px; margin-bottom: 16px; opacity: 0.5; }
     .empty-state p { font-size: 14px; margin-bottom: 24px; }
 
+    /* SOLD OUT CARD OVERLAYS */
+    .dish-card.sold-out, .fav-card.sold-out {
+      pointer-events: none !important;
+      cursor: default !important;
+      opacity: 0.6;
+    }
+
+    /* CALORIE BADGE */
+    .dish-img-wrapper {
+      position: relative;
+      flex-shrink: 0;
+      margin-right: 12px;
+    }
+    .dish-cals-badge {
+      position: absolute;
+      top: -4px;
+      right: -4px;
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      background: rgba(17, 17, 20, 0.9);
+      border: 1.5px solid var(--c-gold);
+      color: var(--c-gold);
+      font-size: 8px;
+      font-weight: 700;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      line-height: 0.9;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.6);
+      font-family: var(--font-sans);
+    }
+    .dish-cals-badge span {
+      font-size: 6px;
+      font-weight: 400;
+      color: var(--c-text-3);
+      text-transform: uppercase;
+    }
+
+    /* INGREDIENTS & DESCRIPTIONS */
+    .dish-desc {
+      font-size: 11px;
+      color: var(--c-text-2);
+      margin-bottom: 8px;
+      line-height: 1.4;
+    }
+    .dish-ingredients {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 4px;
+      margin-bottom: 8px;
+    }
+    .ing-tag {
+      font-size: 9px;
+      color: var(--c-text-2);
+      background: var(--c-surface-2);
+      border: 1px solid var(--c-border);
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-family: var(--font-sans);
+    }
+
+    /* PAIRINGS */
+    .btn-pairing {
+      width: 100%;
+      background: var(--c-surface-2);
+      border: 1px solid var(--c-gold);
+      color: var(--c-gold);
+      padding: 10px;
+      border-radius: 8px;
+      font-size: 13px;
+      font-weight: 500;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 12px;
+      transition: background 0.2s, transform 0.1s;
+    }
+    .btn-pairing:active { transform: scale(0.98); }
+    .pairing-box {
+      background: rgba(201, 168, 76, 0.08);
+      border: 1px dashed var(--c-gold);
+      border-radius: 8px;
+      padding: 12px;
+      margin-bottom: 16px;
+      animation: fadeIn 0.3s ease;
+    }
+    .pairing-title {
+      font-size: 11px;
+      color: var(--c-gold);
+      text-transform: uppercase;
+      font-weight: 600;
+      letter-spacing: 0.5px;
+      margin-bottom: 4px;
+    }
+    .pairing-value {
+      font-size: 13px;
+      color: var(--c-text);
+      font-weight: 500;
+    }
+
+    @keyframes rotate {
+      100% { transform: rotate(360deg); }
+    }
   </style>
 </head>
 <body>
@@ -682,10 +787,28 @@
   <div class="bottom-sheet" id="sheet-dish">
     <div class="sheet-handle"></div>
     <div class="sheet-content">
-      <img src="" class="sheet-img" id="sd-img">
+      <div style="position:relative">
+        <img src="" class="sheet-img" id="sd-img">
+        <div class="dish-cals-badge" id="sd-cals" style="top:10px; right:10px; width:36px; height:36px; font-size:10px;"></div>
+      </div>
       <div class="sheet-title" id="sd-name"></div>
-      <div class="sheet-desc">Preparado con ingredientes frescos y la receta original de Rogasa Café. Una experiencia culinaria única.</div>
-      <div class="sheet-price-row">
+      <div class="sheet-desc" id="sd-desc"></div>
+      
+      <div style="margin-bottom:16px">
+        <div style="font-size:11px; text-transform:uppercase; color:var(--c-text-3); letter-spacing:0.5px; margin-bottom:6px">Ingredientes Destacados</div>
+        <div class="dish-ingredients" id="sd-ingredients"></div>
+      </div>
+      
+      <button class="btn-pairing" id="sd-pairing-btn" onclick="showPairingRecommendation()">
+        <svg viewBox="0 0 24 24" style="width:16px;height:16px;stroke:var(--c-gold);fill:none;margin-right:8px"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+        Recomendar Acompañamiento
+      </button>
+      <div id="sd-pairing-result" class="pairing-box" style="display:none">
+        <div class="pairing-title">✨ Acompañamiento Recomendado</div>
+        <div class="pairing-value" id="sd-pairing-value"></div>
+      </div>
+
+      <div class="sheet-price-row" style="margin-top:16px">
         <div class="sheet-price-usd" id="sd-price-usd"></div>
         <div class="sheet-price-bs" id="sd-price-bs"></div>
       </div>
@@ -733,25 +856,215 @@
   const WHATSAPP_NUM = '584225604660';
 
   const MENU = [
-    {id:1, name:'Carpaccio De Lomito', price:18, cat:'entradas', img:'../img/carpaccio_lomito.webp'},
-    {id:2, name:'Carpaccio De Pulpo', price:22, cat:'entradas', img:'../img/carpaccio_pulpo.webp'},
-    {id:3, name:'Tequeños Hechos En Casa', price:10, cat:'entradas', img:'../img/tequenos_caseros.webp'},
-    {id:4, name:'Ensalada Capresa Rogasa', price:14, cat:'entradas', img:'../img/ensalada_capresa.webp'},
-    {id:5, name:'Fosforera Rogasa', price:16, cat:'entradas', img:'../img/fosforera_rogasa.webp'},
-    {id:6, name:'Spaghetti Carbonara', price:24, cat:'pastas', img:'../img/carbonara.webp'},
-    {id:7, name:'Lasaña De La Abuela', price:22, cat:'pastas', img:'../img/lasana.webp'},
-    {id:8, name:'Cartoccio De Lomito', price:26, cat:'pastas', img:'../img/lomito_florencia.webp'},
-    {id:9, name:'Risotto Negro', price:28, cat:'pastas', img:'../img/risotto_negro.webp'},
-    {id:10, name:'Lomito Florencia', price:36, cat:'carnes', img:'../img/lomito_florencia.webp'},
-    {id:11, name:'Hamburguesa Angus', price:20, cat:'carnes', img:'../img/hamburguesa.webp'},
-    {id:12, name:'Langostinos Tempura', price:28, cat:'carnes', img:'../img/langostinos_tempura.webp'},
-    {id:13, name:'Pulpo Al Grill', price:30, cat:'carnes', img:'../img/pulpo_grill.webp'},
-    {id:14, name:'Tartufo De Mortadela (Pizza)', price:22, cat:'pizzas', img:'../img/pizzas_tartufo.webp'},
-    {id:15, name:'Focaccia Rústica Martina', price:16, cat:'pizzas', img:'../img/pizzas_tartufo.webp'},
-    {id:16, name:'Panuzzo Pollo Crispy', price:18, cat:'pizzas', img:'../img/hamburguesa.webp'},
-    {id:17, name:'Macarrón Con Queso', price:12, cat:'infantil', img:'../img/carbonara.webp'},
-    {id:18, name:'Torta Rústica de Chocolate', price:10, cat:'postres', img:'../img/torta_chocolate.webp'},
-    {id:19, name:'Jugo de Fresa Natural', price:6, cat:'bebidas', img:'../img/jugo_fresa.webp'}
+    {
+      id: 1,
+      name: 'Carpaccio De Lomito',
+      price: 18,
+      cat: 'entradas',
+      img: '../img/carpaccio_lomito.webp',
+      desc: 'Finas lajas de solomo de res con alcaparras, parmesano y aderezo de mostaza.',
+      cals: 280,
+      ingredients: ['Solomo de res', 'Parmesano', 'Alcaparras', 'Mostaza'],
+      pairing: 'Copa de Vino Tinto Malbec'
+    },
+    {
+      id: 2,
+      name: 'Carpaccio De Pulpo',
+      price: 22,
+      cat: 'entradas',
+      img: '../img/carpaccio_pulpo.webp',
+      desc: 'Delicadas láminas de pulpo cocido con vinagreta de limón, oliva y un toque de pimentón.',
+      cals: 190,
+      ingredients: ['Pulpo', 'Limón', 'Aceite de Oliva', 'Pimentón dulce'],
+      pairing: 'Copa de Vino Blanco Pinot Grigio'
+    },
+    {
+      id: 3,
+      name: 'Tequeños Hechos En Casa',
+      price: 10,
+      cat: 'entradas',
+      img: '../img/tequenos_caseros.webp',
+      desc: 'Clásicos dedos de masa de trigo rellenos de abundante queso blanco derretido.',
+      cals: 420,
+      ingredients: ['Queso Blanco', 'Masa de trigo', 'Salsa tártara'],
+      pairing: 'Cerveza artesanal rubia'
+    },
+    {
+      id: 4,
+      name: 'Ensalada Capresa Rogasa',
+      price: 14,
+      cat: 'entradas',
+      img: '../img/ensalada_capresa.webp',
+      desc: 'Rodajas de tomate fresco, queso mozzarella, albahaca fresca y reducción de balsámico.',
+      cals: 240,
+      ingredients: ['Tomate fresco', 'Mozzarella de búfala', 'Albahaca', 'Balsámico'],
+      pairing: 'Copa de Vino Blanco Sauvignon Blanc'
+    },
+    {
+      id: 5,
+      name: 'Fosforera Rogasa',
+      price: 16,
+      cat: 'entradas',
+      img: '../img/fosforera_rogasa.webp',
+      desc: 'Sopa tradicional de mariscos concentrada con base de ají dulce, cilantro y mariscos variados.',
+      cals: 310,
+      ingredients: ['Mariscos mixtos', 'Cilantro', 'Ají dulce', 'Limón'],
+      pairing: 'Cerveza helada ligera'
+    },
+    {
+      id: 6,
+      name: 'Spaghetti Carbonara',
+      price: 24,
+      cat: 'pastas',
+      img: '../img/carbonara.webp',
+      desc: 'Pasta italiana con salsa cremosa a base de yemas de huevo, pecorino, pimienta y panceta crujiente.',
+      cals: 780,
+      ingredients: ['Panceta', 'Yema de huevo', 'Queso Pecorino', 'Pimienta negra'],
+      pairing: 'Copa de Vino Tinto Chianti Classico'
+    },
+    {
+      id: 7,
+      name: 'Lasaña De La Abuela',
+      price: 22,
+      cat: 'pastas',
+      img: '../img/lasana.webp',
+      desc: 'Capas de pasta rellenas de boloñesa casera, salsa bechamel y queso gratinado.',
+      cals: 650,
+      ingredients: ['Carne molida', 'Salsa boloñesa', 'Bechamel', 'Queso Parmesano'],
+      pairing: 'Copa de Vino Tinto Merlot'
+    },
+    {
+      id: 8,
+      name: 'Cartoccio De Lomito',
+      price: 26,
+      cat: 'pastas',
+      img: '../img/lomito_florencia.webp',
+      desc: 'Trozos de solomo envueltos en papel aluminio cocinados al horno con ajo, romero y champiñones.',
+      cals: 580,
+      ingredients: ['Solomo de res', 'Champiñones', 'Ajo', 'Romero'],
+      pairing: 'Copa de Vino Tinto Cabernet Sauvignon'
+    },
+    {
+      id: 9,
+      name: 'Risotto Negro',
+      price: 28,
+      cat: 'pastas',
+      img: '../img/risotto_negro.webp',
+      desc: 'Risotto de mariscos con tinta de calamar, vino blanco, mantequilla y queso parmesano.',
+      cals: 520,
+      ingredients: ['Tinta de calamar', 'Arroz arborio', 'Calamar', 'Parmesano'],
+      pairing: 'Copa de Vino Blanco Chardonnay'
+    },
+    {
+      id: 10,
+      name: 'Lomito Florencia',
+      price: 36,
+      cat: 'carnes',
+      img: '../img/lomito_florencia.webp',
+      desc: 'Medallón de lomito a la parrilla bañado en salsa cremosa de espinacas y queso gorgonzola.',
+      cals: 710,
+      ingredients: ['Lomito de res', 'Espinacas', 'Queso Gorgonzola', 'Crema'],
+      pairing: 'Copa de Vino Tinto Syrah'
+    },
+    {
+      id: 11,
+      name: 'Hamburguesa Angus',
+      price: 20,
+      cat: 'carnes',
+      img: '../img/hamburguesa.webp',
+      desc: 'Carne de res Angus importada con queso cheddar fundido, tocineta, lechuga y tomate en pan brioche.',
+      cals: 890,
+      ingredients: ['Carne Angus 200g', 'Queso Cheddar', 'Tocineta', 'Pan brioche'],
+      pairing: 'Papas rústicas con ajo y romero'
+    },
+    {
+      id: 12,
+      name: 'Langostinos Tempura',
+      price: 28,
+      cat: 'carnes',
+      img: '../img/langostinos_tempura.webp',
+      desc: 'Langostinos gigantes rebozados al estilo tempura japonesa con salsa dulce de soya.',
+      cals: 360,
+      ingredients: ['Langostinos', 'Masa tempura', 'Salsa de soya dulce'],
+      pairing: 'Cerveza tipo Lager japonesa'
+    },
+    {
+      id: 13,
+      name: 'Pulpo Al Grill',
+      price: 30,
+      cat: 'carnes',
+      img: '../img/pulpo_grill.webp',
+      desc: 'Tentáculo de pulpo marinado a las brasas sobre cama de papas arrugadas y mojo verde canario.',
+      cals: 340,
+      ingredients: ['Pulpo', 'Papas arrugadas', 'Mojo verde', 'Pimentón de la Vera'],
+      pairing: 'Copa de Vino Rosado seco'
+    },
+    {
+      id: 14,
+      name: 'Tartufo De Mortadela (Pizza)',
+      price: 22,
+      cat: 'pizzas',
+      img: '../img/pizzas_tartufo.webp',
+      desc: 'Pizza artesanal con base blanca, mortadela italiana de Bolonia, stracciatella y pistachos.',
+      cals: 820,
+      ingredients: ['Mortadela de Bolonia', 'Stracciatella', 'Crema de pistacho', 'Masa artesanal'],
+      pairing: 'Copa de Vino Espumoso Prosecco'
+    },
+    {
+      id: 15,
+      name: 'Focaccia Rústica Martina',
+      price: 16,
+      cat: 'pizzas',
+      img: '../img/pizzas_tartufo.webp',
+      desc: 'Pan plano italiano horneado con aceite de oliva, sal gruesa, romero fresco y aceitunas negras.',
+      cals: 390,
+      ingredients: ['Romero fresco', 'Aceitunas negras', 'Aceite de oliva extra virgen', 'Sal marina'],
+      pairing: 'Copa de Sangría de frutas'
+    },
+    {
+      id: 16,
+      name: 'Panuzzo Pollo Crispy',
+      price: 18,
+      cat: 'pizzas',
+      img: '../img/hamburguesa.webp',
+      desc: 'Sándwich de masa de pizza relleno de pollo crujiente, mayonesa trufada, rúcula y parmesano.',
+      cals: 680,
+      ingredients: ['Pollo crujiente', 'Masa de pizza', 'Mayonesa trufada', 'Rúcula'],
+      pairing: 'Té frío de durazno'
+    },
+    {
+      id: 17,
+      name: 'Macarrón Con Queso',
+      price: 12,
+      cat: 'infantil',
+      img: '../img/carbonara.webp',
+      desc: 'Pasta corta bañada en deliciosa y cremosa salsa de tres quesos americanos gratinados.',
+      cals: 490,
+      ingredients: ['Cheddar', 'Mozzarella', 'Parmesano', 'Pasta corta'],
+      pairing: 'Jugo de frutas natural'
+    },
+    {
+      id: 18,
+      name: 'Torta Rústica de Chocolate',
+      price: 10,
+      cat: 'postres',
+      img: '../img/torta_chocolate.webp',
+      desc: 'Torta húmeda de chocolate oscuro 70% cacao con cobertura de fudge caliente de chocolate.',
+      cals: 510,
+      ingredients: ['Chocolate 70%', 'Fudge de chocolate', 'Cacao en polvo'],
+      pairing: 'Copa de Vino Dulce Oporto'
+    },
+    {
+      id: 19,
+      name: 'Jugo de Fresa Natural',
+      price: 6,
+      cat: 'bebidas',
+      img: '../img/jugo_fresa.webp',
+      desc: 'Jugo espeso de fresas frescas licuadas, endulzado al gusto y servido bien frío.',
+      cals: 90,
+      ingredients: ['Fresas frescas', 'Agua', 'Hielo'],
+      pairing: 'Ninguno'
+    }
   ];
 
   const CATEGORIES = ['Todo', 'Entradas', 'Pastas', 'Carnes', 'Pizzas', 'Postres', 'Bebidas', 'Infantil'];
@@ -788,6 +1101,7 @@
   window.toggleSoldOut = toggleSoldOut;
   window.toggleFavorite = toggleFavorite;
   window.updateOrderStatus = updateOrderStatus;
+  window.showPairingRecommendation = showPairingRecommendation;
   window.dismissOrder = dismissOrder;
   window.sendWhatsAppUpdate = sendWhatsAppUpdate;
   window.checkout = checkout;
@@ -864,19 +1178,28 @@
   function renderFavorites() {
     const cont = document.getElementById('fav-container');
     const favs = MENU.filter(d => state.favorites.includes(d.id));
-    cont.innerHTML = favs.map(d => `
-      <div class="fav-card" onclick="openDishSheet(${d.id})">
-        <img src="${d.img}" class="fav-img">
-        <div class="fav-info">
-          <div class="fav-name">${d.name}</div>
-          <div class="fav-price">$${d.price}</div>
+    cont.innerHTML = favs.map(d => {
+      const sold = isSoldOut(d.id);
+      return `
+        <div class="fav-card ${sold ? 'sold-out' : ''}" onclick="${sold ? '' : `openDishSheet(${d.id})`}">
+          <div style="position:relative">
+            <img src="${d.img}" class="fav-img">
+            <div class="dish-cals-badge" style="top:4px; right:4px; width:26px; height:26px; font-size:7px;">
+              ${d.cals}
+              <span style="font-size:5px">kcal</span>
+            </div>
+          </div>
+          <div class="fav-info">
+            <div class="fav-name">${d.name}</div>
+            <div class="fav-price">$${d.price}</div>
+          </div>
+          ${sold ? `
+          <div class="agotado-overlay">
+            <div class="agotado-badge">Agotado</div>
+          </div>` : ''}
         </div>
-        ${isSoldOut(d.id) ? `
-        <div class="agotado-overlay">
-          <div class="agotado-badge">Agotado</div>
-        </div>` : ''}
-      </div>
-    `).join('');
+      `;
+    }).join('');
   }
 
   function renderMenu() {
@@ -890,29 +1213,44 @@
     if (state.searchQuery) {
       filtered = filtered.filter(d => d.name.toLowerCase().includes(state.searchQuery));
     }
-
-    cont.innerHTML = filtered.map(d => `
-      <div class="dish-card" onclick="openDishSheet(${d.id})">
-        <img src="${d.img}" class="dish-img">
-        <div class="dish-info">
-          <div class="dish-name">${d.name}</div>
-          <div class="dish-cat">${d.cat}</div>
-          <div class="dish-price-row">
-            <div>
-              <span class="dish-price">$${d.price}</span>
-              <span class="dish-price-bs">${formatBs(d.price)}</span>
+ 
+    cont.innerHTML = filtered.map(d => {
+      const sold = isSoldOut(d.id);
+      return `
+        <div class="dish-card ${sold ? 'sold-out' : ''}" onclick="${sold ? '' : `openDishSheet(${d.id})`}">
+          <div class="dish-img-wrapper">
+            <img src="${d.img}" class="dish-img">
+            <div class="dish-cals-badge">
+              ${d.cals}
+              <span>kcal</span>
             </div>
-            <button class="dish-add" onclick="event.stopPropagation(); ${isSoldOut(d.id) ? '' : `addToCart(${d.id})`}">
-              <svg viewBox="0 0 24 24" style="width:16px;height:16px"><path d="M12 5v14M5 12h14"/></svg>
-            </button>
           </div>
+          <div class="dish-info">
+            <div class="dish-name">${d.name}</div>
+            <div class="dish-cat">${d.cat}</div>
+            <div class="dish-desc">${d.desc}</div>
+            <div class="dish-ingredients">
+              ${d.ingredients.map(ing => `<span class="ing-tag">${ing}</span>`).join('')}
+            </div>
+            <div class="dish-price-row">
+              <div>
+                <span class="dish-price">$${d.price}</span>
+                <span class="dish-price-bs">${formatBs(d.price)}</span>
+              </div>
+              ${sold ? '' : `
+              <button class="dish-add" onclick="event.stopPropagation(); addToCart(${d.id})">
+                <svg viewBox="0 0 24 24" style="width:16px;height:16px"><path d="M12 5v14M5 12h14"/></svg>
+              </button>
+              `}
+            </div>
+          </div>
+          ${sold ? `
+          <div class="agotado-overlay" style="border-radius:12px">
+            <div class="agotado-badge">Agotado</div>
+          </div>` : ''}
         </div>
-        ${isSoldOut(d.id) ? `
-        <div class="agotado-overlay" style="border-radius:12px">
-          <div class="agotado-badge">Agotado</div>
-        </div>` : ''}
-      </div>
-    `).join('');
+      `;
+    }).join('');
   }
 
   // BOTTOM SHEETS
@@ -928,8 +1266,18 @@
     
     document.getElementById('sd-img').src = d.img;
     document.getElementById('sd-name').textContent = d.name;
+    document.getElementById('sd-desc').textContent = d.desc;
     document.getElementById('sd-price-usd').textContent = `$${d.price}`;
     document.getElementById('sd-price-bs').textContent = formatBs(d.price);
+    
+    const ingCont = document.getElementById('sd-ingredients');
+    ingCont.innerHTML = d.ingredients.map(ing => `<span class="ing-tag">${ing}</span>`).join('');
+    
+    document.getElementById('sd-cals').innerHTML = `${d.cals} <span>kcal</span>`;
+
+    // Reset pairing result
+    document.getElementById('sd-pairing-btn').style.display = 'flex';
+    document.getElementById('sd-pairing-result').style.display = 'none';
     
     const btn = document.getElementById('sd-add-btn');
     if(isSoldOut(id)) {
@@ -942,6 +1290,29 @@
 
     document.getElementById('sheet-overlay').classList.add('active');
     document.getElementById('sheet-dish').classList.add('active');
+  }
+
+  function showPairingRecommendation() {
+    const d = getDish(state.selectedDishId);
+    if (!d) return;
+    
+    const btn = document.getElementById('sd-pairing-btn');
+    const result = document.getElementById('sd-pairing-result');
+    const val = document.getElementById('sd-pairing-value');
+    
+    btn.innerHTML = `<svg class="spinner" viewBox="0 0 50 50" style="width:16px;height:16px;margin-right:8px;animation:rotate 1s linear infinite;stroke:var(--c-gold);"><circle cx="25" cy="25" r="20" fill="none" stroke="currentColor" stroke-width="5" stroke-linecap="round"></circle></svg> Seleccionando acompañamiento...`;
+    btn.style.opacity = '0.7';
+    btn.style.pointerEvents = 'none';
+    
+    setTimeout(() => {
+      btn.style.display = 'none';
+      btn.style.opacity = '1';
+      btn.style.pointerEvents = 'auto';
+      btn.innerHTML = `<svg viewBox="0 0 24 24" style="width:16px;height:16px;stroke:var(--c-gold);fill:none;margin-right:8px"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg> Recomendar Acompañamiento`;
+      
+      val.textContent = d.pairing;
+      result.style.display = 'block';
+    }, 600);
   }
 
   function closeSheets() {
