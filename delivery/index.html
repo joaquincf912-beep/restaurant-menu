@@ -747,43 +747,44 @@
     unsubscribeAdmin: null
   };
 
-  // INITIALIZATION
-  window.addEventListener('DOMContentLoaded', () => {
-    // Check URL for tracking
-    const urlParams = new URLSearchParams(window.location.search);
-    if(urlParams.has('id')) {
-      state.trackingId = urlParams.get('id');
-      localStorage.setItem('last_delivery_tracking_id', state.trackingId);
-      switchTab('seguimiento');
-    }
-    
-    renderCategories();
-    renderFavorites();
-    renderMenu();
-    updateCartBadge();
-    document.getElementById('tasa-input').value = state.tasa.toFixed(2);
-    
-    // Set up global functions
-    window.switchTab = switchTab;
-    window.closeSheets = closeSheets;
-    window.openServicesSheet = openServicesSheet;
-    window.openDishSheet = openDishSheet;
-    window.addToCartFromSheet = addToCartFromSheet;
-    window.openWhatsAppReserva = openWhatsAppReserva;
-    window.setCategory = setCategory;
-    window.renderMenu = renderMenu;
-    window.addToCart = addToCart;
-    window.updateCartQuantity = updateCartQuantity;
-    window.setPayMethod = setPayMethod;
-    window.checkout = checkout;
-    window.checkPin = checkPin;
-    window.saveTasa = saveTasa;
-    window.toggleSoldOut = toggleSoldOut;
-    window.toggleFavorite = toggleFavorite;
-    window.updateOrderStatus = updateOrderStatus;
-    window.dismissOrder = dismissOrder;
-    window.sendWhatsAppUpdate = sendWhatsAppUpdate;
-  });
+  // Set up global functions immediately
+  window.switchTab = switchTab;
+  window.closeSheets = closeSheets;
+  window.openServicesSheet = openServicesSheet;
+  window.openDishSheet = openDishSheet;
+  window.addToCartFromSheet = addToCartFromSheet;
+  window.openWhatsAppReserva = openWhatsAppReserva;
+  window.setCategory = setCategory;
+  window.renderMenu = renderMenu;
+  window.addToCart = addToCart;
+  window.updateCartQuantity = updateCartQuantity;
+  window.setPayMethod = setPayMethod;
+  window.checkPin = checkPin;
+  window.saveTasa = saveTasa;
+  window.toggleSoldOut = toggleSoldOut;
+  window.toggleFavorite = toggleFavorite;
+  window.updateOrderStatus = updateOrderStatus;
+  window.dismissOrder = dismissOrder;
+  window.sendWhatsAppUpdate = sendWhatsAppUpdate;
+  window.checkout = checkout;
+
+  // Check URL for tracking
+  const urlParams = new URLSearchParams(window.location.search);
+  if(urlParams.has('id')) {
+    state.trackingId = urlParams.get('id');
+    localStorage.setItem('last_delivery_tracking_id', state.trackingId);
+    switchTab('seguimiento');
+  }
+  
+  renderCategories();
+  renderFavorites();
+  renderMenu();
+  updateCartBadge();
+  
+  const tasaInput = document.getElementById('tasa-input');
+  if(tasaInput) {
+    tasaInput.value = state.tasa.toFixed(2);
+  }
 
   // NAVIGATION
   function switchTab(tabId) {
