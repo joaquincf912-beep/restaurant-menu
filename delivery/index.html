@@ -533,8 +533,60 @@
     /* PERFORMANCE & UX */
     .carousel-track { will-change: transform; }
     img { -webkit-user-drag: none; }
+
+    /* TOAST NOTIFICATIONS */
+    .toast-wrap {
+      position: fixed;
+      top: 16px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: calc(100% - 32px);
+      max-width: 448px;
+      z-index: 9999;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      pointer-events: none;
+    }
+    .toast {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      background: rgba(24, 24, 28, 0.98);
+      border: 1px solid var(--c-border-h);
+      border-left: 3px solid var(--c-gold);
+      border-radius: 10px;
+      padding: 13px 16px;
+      box-shadow: 0 8px 28px rgba(0, 0, 0, 0.55);
+      animation: toastIn 0.28s cubic-bezier(0.21, 1.02, 0.73, 1);
+      touch-action: manipulation;
+    }
+    .toast.leaving { animation: toastOut 0.25s ease forwards; }
+    .toast-error { border-left-color: var(--c-rose); }
+    .toast-error .toast-ic { background: var(--c-rose); }
+    .toast-success { border-left-color: var(--c-emerald); }
+    .toast-success .toast-ic { background: var(--c-emerald); }
+    .toast-ic {
+      flex: none;
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--c-bg);
+    }
+    .toast-ic svg { width: 14px; height: 14px; }
+    .toast-msg { font-size: 13.5px; line-height: 1.45; color: var(--c-text); }
+    @keyframes toastIn { from { opacity: 0; transform: translateY(-12px); } to { opacity: 1; transform: translateY(0); } }
+    @keyframes toastOut { from { opacity: 1; transform: translateY(0); } to { opacity: 0; transform: translateY(-12px); } }
+
+    /* Campos con datos faltantes */
+    .field-error { border-color: var(--c-rose) !important; }
+    .field-error:focus { border-color: var(--c-rose) !important; }
+
     @media (prefers-reduced-motion: reduce) {
-      .view, .carousel-track, .dot, .bottom-sheet, .sheet-overlay, .step-icon, .step-line-progress, .fab-cart { animation: none !important; transition: none !important; }
+      .view, .carousel-track, .dot, .bottom-sheet, .sheet-overlay, .step-icon, .step-line-progress, .fab-cart, .toast { animation: none !important; transition: none !important; }
     }
 
   </style>
@@ -984,6 +1036,44 @@
     }
   }
 
+  // TOASTS (notificaciones con el estilo de la página)
+  function showToast(msg, type) {
+    type = type || 'error';
+    let wrap = document.querySelector('.toast-wrap');
+    if(!wrap) {
+      wrap = document.createElement('div');
+      wrap.className = 'toast-wrap';
+      document.body.appendChild(wrap);
+    }
+    const icons = {
+      error: '<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"></circle><line x1="12" y1="8" x2="12" y2="13"></line><line x1="12" y1="16.5" x2="12.01" y2="16.5"></line></svg>',
+      success: '<svg viewBox="0 0 24 24"><path d="M20 6L9 17l-5-5"></path></svg>'
+    };
+    const t = document.createElement('div');
+    t.className = `toast toast-${type}`;
+    t.innerHTML = `<div class="toast-ic">${icons[type] || icons.error}</div><div class="toast-msg">${msg}</div>`;
+    wrap.appendChild(t);
+    while(wrap.children.length > 3) wrap.firstChild.remove();
+    setTimeout(() => {
+      t.classList.add('leaving');
+      t.addEventListener('animationend', () => t.remove(), { once: true });
+    }, 3200);
+  }
+
+  // Resalta los campos vacíos y enfoca el primero
+  function markInvalidFields(ids) {
+    const empty = ids.filter(id => {
+      const el = document.getElementById(id);
+      return el && !el.value.trim();
+    });
+    empty.forEach(id => {
+      const el = document.getElementById(id);
+      el.classList.add('field-error');
+      el.addEventListener('input', () => el.classList.remove('field-error'), { once: true });
+    });
+    if(empty.length) document.getElementById(empty[0]).focus();
+  }
+
   // UTILS
   let searchTimer = null;
   function onSearchInput() {
@@ -1143,7 +1233,8 @@
     const extra = $('rv-msg').value.trim();
 
     if(!name || !phone || !date) {
-      alert('Completa al menos nombre, teléfono y fecha.');
+      showToast('Completa al menos nombre, teléfono y fecha.');
+      markInvalidFields(['rv-name','rv-phone','rv-date']);
       return;
     }
 
@@ -1318,7 +1409,8 @@
     const ref = document.getElementById('c-ref')?.value;
     
     if(!name || !phone || !sector) {
-      alert("Por favor completa nombre, teléfono y sector.");
+      showToast('Por favor completa nombre, teléfono y barrio.');
+      markInvalidFields(['c-name','c-phone','c-sector']);
       return;
     }
 
@@ -1579,7 +1671,7 @@
     if(!isNaN(val) && val > 0) {
       state.tasa = val;
       localStorage.setItem('tasa', val);
-      alert('Tasa guardada correctamente.');
+      showToast('Tasa guardada correctamente.', 'success');
       renderMenu(); // Update prices
     }
   }
