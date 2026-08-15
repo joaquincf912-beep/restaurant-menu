@@ -1345,7 +1345,7 @@
     localStorage.setItem('last_delivery_tracking_id', state.trackingId);
     
     const payLabels = {efectivo:'Efectivo',transferencia:'Transferencia Bancaria',zelle:'Zelle'};
-    const trackUrl = `https://traccionweb.com/domicilios?id=${pedido.id}`;
+    const trackUrl = `https://menu.traccionweb.com/delivery/?id=${pedido.id}`;
     let msg = `*ROGASA CAFE — Pedido a Domicilio*\n`;
     msg += `━━━━━━━━━━━━━━━━━━━━━━━━\n`;
     msg += `*Pedido:* ${pedido.id}\n`;
@@ -1523,7 +1523,7 @@
       reparto: 'En Camino — El repartidor se dirige a tu ubicacion',
       entregado: 'Entregado — Tu pedido ha sido entregado'
     };
-    const trackUrl = `https://traccionweb.com/domicilios?id=${id}`;
+    const trackUrl = `https://menu.traccionweb.com/delivery/?id=${id}`;
     let msg = `*ROGASA CAFE*\n`;
     msg += `━━━━━━━━━━━━━━━━━━━━━━━━\n`;
     msg += `*Actualizacion de Pedido*\n\n`;
