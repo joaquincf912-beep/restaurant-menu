@@ -3,22 +3,27 @@
 <head>
   <meta charset="UTF-8">
   <script>
-    const h = window.location.hostname;
-    let b = '/';
-    if (h === 'menu.traccionweb.com') {
-      b = '/delivery/';
-    } else if (h === 'traccionweb.com' || h === 'www.traccionweb.com') {
-      b = '/menu/delivery/';
-    }
-    document.write('<base href="' + b + '">');
+    (function () {
+      // Base href derivado de la ruta real de la página: funciona en cualquier
+      // dominio y carpeta (/delivery/, /menu/delivery/, GitHub Pages, subdominio...)
+      const path = window.location.pathname;
+      const last = path.lastIndexOf('/');
+      const dir = last > 0 ? path.substring(0, last + 1) : '/';
+      const base = document.createElement('base');
+      base.href = dir;
+      document.head.appendChild(base);
+    })();
   </script>
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>Rogasa Café - Delivery</title>
-  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-database-compat.js"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="preconnect" href="https://www.gstatic.com">
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="preload" as="image" href="./img/banner_evento.webp" fetchpriority="high">
+  <script defer src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+  <script defer src="https://www.gstatic.com/firebasejs/10.12.0/firebase-database-compat.js"></script>
   <style>
-    @import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;600;700&family=Inter:wght@300;400;500;600&display=swap');
-
     :root {
       --c-bg: #08080a;
       --c-surface: #111114;
@@ -96,8 +101,25 @@
       font-size: 14px;
       outline: none;
       transition: border-color 0.2s;
+      color-scheme: dark;
     }
     input:focus { border-color: var(--c-gold); }
+    textarea {
+      width: 100%;
+      background: var(--c-surface-2);
+      border: 1px solid var(--c-border);
+      color: var(--c-text);
+      padding: 12px 16px;
+      border-radius: 8px;
+      margin-bottom: 12px;
+      font-family: var(--font-sans);
+      font-size: 14px;
+      outline: none;
+      resize: vertical;
+      min-height: 80px;
+      transition: border-color 0.2s;
+    }
+    textarea:focus { border-color: var(--c-gold); }
     
     button {
       background: none;
@@ -105,7 +127,9 @@
       cursor: pointer;
       font-family: var(--font-sans);
       outline: none;
+      touch-action: manipulation; /* Elimina el retardo de toque en móvil */
     }
+    .nav-item, .chip, .fav-card, .dish-card, .pay-method, .status-btn, .whatsapp-btn, .toggle { touch-action: manipulation; }
     .btn-primary {
       background: var(--c-gold);
       color: var(--c-bg);
@@ -179,46 +203,57 @@
     
     .nav-item:active svg { transform: scale(0.92); }
 
+    .badge {
+      position: absolute;
+      top: 8px;
+      right: 12px;
+      background: var(--c-rose);
+      color: white;
+      font-size: 10px;
+      font-weight: bold;
+      min-width: 16px;
+      height: 16px;
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 0 4px;
+      border: 2px solid var(--c-surface);
+      display: none;
+    }
+    .badge.visible { display: flex; }
+
     /* FLOATING CART BUTTON */
     .fab-cart {
       position: fixed;
-      bottom: 90px;
-      right: max(16px, calc((100vw - 480px) / 2 + 16px));
-      width: 56px;
-      height: 56px;
+      right: max(16px, calc(50% - 240px + 16px));
+      bottom: calc(70px + env(safe-area-inset-bottom) + 16px);
+      width: 58px;
+      height: 58px;
       border-radius: 50%;
-      background: var(--c-gold);
+      background: linear-gradient(135deg, #e0bd5c, var(--c-gold));
       color: var(--c-bg);
       display: flex;
       align-items: center;
       justify-content: center;
-      box-shadow: 0 4px 20px rgba(201,168,76,0.4);
-      z-index: 101;
-      cursor: pointer;
-      transition: transform 0.2s, box-shadow 0.2s;
+      box-shadow: 0 10px 28px rgba(201, 168, 76, 0.35), 0 2px 8px rgba(0, 0, 0, 0.4);
+      z-index: 90;
+      transition: transform 0.15s ease, opacity 0.2s ease;
     }
-    .fab-cart:active { transform: scale(0.9); }
-    .fab-cart:hover { box-shadow: 0 6px 28px rgba(201,168,76,0.55); }
-    .fab-cart svg { width: 24px; height: 24px; stroke: var(--c-bg); fill: none; }
-    .fab-badge {
-      position: absolute;
-      top: -2px;
-      right: -2px;
-      background: var(--c-rose);
-      color: white;
-      font-size: 11px;
-      font-weight: 700;
-      min-width: 20px;
-      height: 20px;
-      border-radius: 10px;
-      display: none;
-      align-items: center;
-      justify-content: center;
-      padding: 0 5px;
-      border: 2px solid var(--c-bg);
-      font-family: var(--font-sans);
+    .fab-cart svg { width: 24px; height: 24px; }
+    .fab-cart:active { transform: scale(0.92); }
+    .fab-cart .badge {
+      top: -3px;
+      right: -3px;
+      border-color: var(--c-surface);
     }
-    .fab-badge.visible { display: flex; }
+    .fab-cart.hidden { opacity: 0; pointer-events: none; transform: scale(0.8); }
+    @keyframes fabBump {
+      0% { transform: scale(1); }
+      40% { transform: scale(1.14); }
+      100% { transform: scale(1); }
+    }
+    .fab-cart.bump { animation: fabBump 0.35s ease; }
 
     /* PROMO CAROUSEL */
     .carousel-container {
@@ -243,10 +278,15 @@
       flex-direction: column;
       justify-content: center;
       cursor: pointer;
+      background-size: cover;
+      background-position: center;
+      background-color: #18181c;
     }
-    .slide-1 { background: linear-gradient(135deg, #18181c, #2a2312); }
-    .slide-2 { background: linear-gradient(135deg, #18181c, #11261d); }
-    .slide-3 { background: linear-gradient(135deg, #18181c, #2e171b); }
+    /* Fondo fotográfico por servicio con overlay oscuro para legibilidad del texto */
+    .slide-1 { background-image: linear-gradient(180deg, rgba(8,8,10,0.42), rgba(8,8,10,0.88)), url('./img/banner_evento.webp'); }
+    .slide-2 { background-image: linear-gradient(180deg, rgba(8,8,10,0.42), rgba(8,8,10,0.88)), url('./img/banner_degustacion.webp'); }
+    .slide-3 { background-image: linear-gradient(180deg, rgba(8,8,10,0.50), rgba(8,8,10,0.90)), url('./img/banner_musica.webp'); }
+    .slide-title, .slide-desc { text-shadow: 0 1px 14px rgba(0,0,0,0.65); }
     
     .slide-title { font-size: 22px; font-family: var(--font-serif); font-weight: 700; color: var(--c-gold); margin-bottom: 8px; }
     .slide-desc { font-size: 13px; color: var(--c-text); line-height: 1.4; }
@@ -400,6 +440,11 @@
     .sheet-price-usd { font-size: 24px; font-weight: 600; color: var(--c-gold); }
     .sheet-price-bs { font-size: 14px; color: var(--c-text-2); margin-left: 12px; margin-bottom: 4px; }
 
+    /* INGREDIENTS & PAIRING */
+    .sheet-ingred { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 20px; }
+    .ingred-chip { background: var(--c-gold-dim); border: 1px solid rgba(201,168,76,0.35); color: var(--c-gold); font-size: 12px; padding: 5px 12px; border-radius: 16px; }
+    .pair-box { margin-top: 12px; background: var(--c-surface-2); border: 1px solid var(--c-border-h); border-left: 3px solid var(--c-gold); border-radius: 8px; padding: 14px; font-size: 14px; color: var(--c-text-2); line-height: 1.5; }
+
     /* CART VIEW */
     .cart-item { display: flex; align-items: center; padding: 12px 0; border-bottom: 1px solid var(--c-border); }
     .cart-item-img { width: 60px; height: 60px; border-radius: 8px; object-fit: cover; margin-right: 12px; }
@@ -485,86 +530,13 @@
     .empty-state svg { width: 48px; height: 48px; margin-bottom: 16px; opacity: 0.5; }
     .empty-state p { font-size: 14px; margin-bottom: 24px; }
 
-    /* SOLD OUT CARD OVERLAYS */
-    .dish-card.sold-out, .fav-card.sold-out {
-      pointer-events: none !important;
-      cursor: default !important;
-      opacity: 0.6;
+    /* PERFORMANCE & UX */
+    .carousel-track { will-change: transform; }
+    img { -webkit-user-drag: none; }
+    @media (prefers-reduced-motion: reduce) {
+      .view, .carousel-track, .dot, .bottom-sheet, .sheet-overlay, .step-icon, .step-line-progress, .fab-cart { animation: none !important; transition: none !important; }
     }
 
-    /* CALORIE BADGE */
-    .dish-img-wrapper {
-      position: relative;
-      flex-shrink: 0;
-      margin-right: 12px;
-    }
-
-
-    /* INGREDIENTS & DESCRIPTIONS */
-    .dish-desc {
-      font-size: 11px;
-      color: var(--c-text-2);
-      margin-bottom: 8px;
-      line-height: 1.4;
-    }
-    .dish-ingredients {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 4px;
-      margin-bottom: 8px;
-    }
-    .ing-tag {
-      font-size: 9px;
-      color: var(--c-text-2);
-      background: var(--c-surface-2);
-      border: 1px solid var(--c-border);
-      padding: 2px 6px;
-      border-radius: 4px;
-      font-family: var(--font-sans);
-    }
-
-    /* PAIRINGS */
-    .btn-pairing {
-      width: 100%;
-      background: var(--c-surface-2);
-      border: 1px solid var(--c-gold);
-      color: var(--c-gold);
-      padding: 10px;
-      border-radius: 8px;
-      font-size: 13px;
-      font-weight: 500;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      margin-bottom: 12px;
-      transition: background 0.2s, transform 0.1s;
-    }
-    .btn-pairing:active { transform: scale(0.98); }
-    .pairing-box {
-      background: rgba(201, 168, 76, 0.08);
-      border: 1px dashed var(--c-gold);
-      border-radius: 8px;
-      padding: 12px;
-      margin-bottom: 16px;
-      animation: fadeIn 0.3s ease;
-    }
-    .pairing-title {
-      font-size: 11px;
-      color: var(--c-gold);
-      text-transform: uppercase;
-      font-weight: 600;
-      letter-spacing: 0.5px;
-      margin-bottom: 4px;
-    }
-    .pairing-value {
-      font-size: 13px;
-      color: var(--c-text);
-      font-weight: 500;
-    }
-
-    @keyframes rotate {
-      100% { transform: rotate(360deg); }
-    }
   </style>
 </head>
 <body>
@@ -603,7 +575,7 @@
     <div class="section-title" style="margin-top: 16px;">Nuestro Menú</div>
     <div class="search-bar">
       <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
-      <input type="text" id="search-input" placeholder="Buscar platillos..." oninput="renderMenu()">
+      <input type="text" id="search-input" placeholder="Buscar platillos..." oninput="onSearchInput()">
     </div>
     
     <div class="chip-scroll" id="category-chips">
@@ -730,10 +702,10 @@
   </div>
 
   <!-- FLOATING CART BUTTON -->
-  <div class="fab-cart" onclick="switchTab('carrito')">
-    <div class="fab-badge" id="cart-badge">0</div>
+  <button class="fab-cart" id="fab-cart" onclick="switchTab('carrito')" aria-label="Ver carrito">
+    <div class="badge" id="cart-badge">0</div>
     <svg viewBox="0 0 24 24"><circle cx="9" cy="21" r="1"></circle><circle cx="20" cy="21" r="1"></circle><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path></svg>
-  </div>
+  </button>
 
   <!-- BOTTOM NAV -->
   <div class="bottom-nav">
@@ -762,29 +734,35 @@
   <div class="bottom-sheet" id="sheet-dish">
     <div class="sheet-handle"></div>
     <div class="sheet-content">
-      <img src="" class="sheet-img" id="sd-img">
+      <img src="" class="sheet-img" id="sd-img" alt="" loading="lazy" decoding="async" width="480" height="200">
       <div class="sheet-title" id="sd-name"></div>
       <div class="sheet-desc" id="sd-desc"></div>
-      
-      <div style="margin-bottom:16px">
-        <div style="font-size:11px; text-transform:uppercase; color:var(--c-text-3); letter-spacing:0.5px; margin-bottom:6px">Ingredientes Destacados</div>
-        <div class="dish-ingredients" id="sd-ingredients"></div>
-      </div>
-      
-      <button class="btn-pairing" id="sd-pairing-btn" onclick="showPairingRecommendation()">
-        <svg viewBox="0 0 24 24" style="width:16px;height:16px;stroke:var(--c-gold);fill:none;margin-right:8px"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
-        Recomendar Acompañamiento
-      </button>
-      <div id="sd-pairing-result" class="pairing-box" style="display:none">
-        <div class="pairing-title">✨ Acompañamiento Recomendado</div>
-        <div class="pairing-value" id="sd-pairing-value"></div>
-      </div>
-
-      <div class="sheet-price-row" style="margin-top:16px">
+      <div class="sheet-ingred" id="sd-ingred"></div>
+      <div class="sheet-price-row">
         <div class="sheet-price-usd" id="sd-price-usd"></div>
         <div class="sheet-price-bs" id="sd-price-bs"></div>
       </div>
       <button class="btn-primary" id="sd-add-btn" onclick="addToCartFromSheet()">Agregar al Carrito</button>
+      <button class="btn-outline" id="sd-pair-btn" style="margin-top:12px" onclick="toggleRecomendacion()">Recomendar acompañamiento</button>
+      <div class="pair-box" id="sd-pair" style="display:none"></div>
+    </div>
+  </div>
+
+  <!-- Reservation Form Sheet -->
+  <div class="bottom-sheet" id="sheet-reserva">
+    <div class="sheet-handle"></div>
+    <div class="sheet-content">
+      <div class="sheet-title" id="rv-title" style="margin-bottom:8px"></div>
+      <div class="subtitle" style="margin-bottom:20px">Completa tus datos y confirma tu reserva por WhatsApp</div>
+      <input type="text" id="rv-name" placeholder="Nombre completo">
+      <input type="tel" id="rv-phone" placeholder="Teléfono / WhatsApp">
+      <input type="date" id="rv-date">
+      <div style="display:flex;gap:12px">
+        <input type="time" id="rv-time" placeholder="Hora" style="flex:1">
+        <input type="number" id="rv-pax" min="1" max="50" placeholder="Personas" style="flex:1">
+      </div>
+      <textarea id="rv-msg" rows="3" placeholder="Comentarios o detalles (opcional)"></textarea>
+      <button class="btn-primary" onclick="sendReservaWhatsApp()">Enviar por WhatsApp</button>
     </div>
   </div>
 
@@ -825,218 +803,88 @@
 <script type="module">
   import { db } from './db-v2.js';
 
+  // Shortcut para getElementById — definido al inicio porque se usa en renders tempranos
+  const $ = (id) => document.getElementById(id);
+
   const WHATSAPP_NUM = '584225604660';
 
   const MENU = [
-    {
-      id: 1,
-      name: 'Carpaccio De Lomito',
-      price: 18,
-      cat: 'entradas',
-      img: '../img/carpaccio_lomito.webp',
-      desc: 'Finas lajas de solomo de res con alcaparras, parmesano y aderezo de mostaza.',
-      cals: 280,
-      ingredients: ['Solomo de res', 'Parmesano', 'Alcaparras', 'Mostaza'],
-      pairing: 'Copa de Vino Tinto Malbec'
-    },
-    {
-      id: 2,
-      name: 'Carpaccio De Pulpo',
-      price: 22,
-      cat: 'entradas',
-      img: '../img/carpaccio_pulpo.webp',
-      desc: 'Delicadas láminas de pulpo cocido con vinagreta de limón, oliva y un toque de pimentón.',
-      cals: 190,
-      ingredients: ['Pulpo', 'Limón', 'Aceite de Oliva', 'Pimentón dulce'],
-      pairing: 'Copa de Vino Blanco Pinot Grigio'
-    },
-    {
-      id: 3,
-      name: 'Tequeños Hechos En Casa',
-      price: 10,
-      cat: 'entradas',
-      img: '../img/tequenos_caseros.webp',
-      desc: 'Clásicos dedos de masa de trigo rellenos de abundante queso blanco derretido.',
-      cals: 420,
-      ingredients: ['Queso Blanco', 'Masa de trigo', 'Salsa tártara'],
-      pairing: 'Cerveza artesanal rubia'
-    },
-    {
-      id: 4,
-      name: 'Ensalada Capresa Rogasa',
-      price: 14,
-      cat: 'entradas',
-      img: '../img/ensalada_capresa.webp',
-      desc: 'Rodajas de tomate fresco, queso mozzarella, albahaca fresca y reducción de balsámico.',
-      cals: 240,
-      ingredients: ['Tomate fresco', 'Mozzarella de búfala', 'Albahaca', 'Balsámico'],
-      pairing: 'Copa de Vino Blanco Sauvignon Blanc'
-    },
-    {
-      id: 5,
-      name: 'Fosforera Rogasa',
-      price: 16,
-      cat: 'entradas',
-      img: '../img/fosforera_rogasa.webp',
-      desc: 'Sopa tradicional de mariscos concentrada con base de ají dulce, cilantro y mariscos variados.',
-      cals: 310,
-      ingredients: ['Mariscos mixtos', 'Cilantro', 'Ají dulce', 'Limón'],
-      pairing: 'Cerveza helada ligera'
-    },
-    {
-      id: 6,
-      name: 'Spaghetti Carbonara',
-      price: 24,
-      cat: 'pastas',
-      img: '../img/carbonara.webp',
-      desc: 'Pasta italiana con salsa cremosa a base de yemas de huevo, pecorino, pimienta y panceta crujiente.',
-      cals: 780,
-      ingredients: ['Panceta', 'Yema de huevo', 'Queso Pecorino', 'Pimienta negra'],
-      pairing: 'Copa de Vino Tinto Chianti Classico'
-    },
-    {
-      id: 7,
-      name: 'Lasaña De La Abuela',
-      price: 22,
-      cat: 'pastas',
-      img: '../img/lasana.webp',
-      desc: 'Capas de pasta rellenas de boloñesa casera, salsa bechamel y queso gratinado.',
-      cals: 650,
-      ingredients: ['Carne molida', 'Salsa boloñesa', 'Bechamel', 'Queso Parmesano'],
-      pairing: 'Copa de Vino Tinto Merlot'
-    },
-    {
-      id: 8,
-      name: 'Cartoccio De Lomito',
-      price: 26,
-      cat: 'pastas',
-      img: '../img/lomito_florencia.webp',
-      desc: 'Trozos de solomo envueltos en papel aluminio cocinados al horno con ajo, romero y champiñones.',
-      cals: 580,
-      ingredients: ['Solomo de res', 'Champiñones', 'Ajo', 'Romero'],
-      pairing: 'Copa de Vino Tinto Cabernet Sauvignon'
-    },
-    {
-      id: 9,
-      name: 'Risotto Negro',
-      price: 28,
-      cat: 'pastas',
-      img: '../img/risotto_negro.webp',
-      desc: 'Risotto de mariscos con tinta de calamar, vino blanco, mantequilla y queso parmesano.',
-      cals: 520,
-      ingredients: ['Tinta de calamar', 'Arroz arborio', 'Calamar', 'Parmesano'],
-      pairing: 'Copa de Vino Blanco Chardonnay'
-    },
-    {
-      id: 10,
-      name: 'Lomito Florencia',
-      price: 36,
-      cat: 'carnes',
-      img: '../img/lomito_florencia.webp',
-      desc: 'Medallón de lomito a la parrilla bañado en salsa cremosa de espinacas y queso gorgonzola.',
-      cals: 710,
-      ingredients: ['Lomito de res', 'Espinacas', 'Queso Gorgonzola', 'Crema'],
-      pairing: 'Copa de Vino Tinto Syrah'
-    },
-    {
-      id: 11,
-      name: 'Hamburguesa Angus',
-      price: 20,
-      cat: 'carnes',
-      img: '../img/hamburguesa.webp',
-      desc: 'Carne de res Angus importada con queso cheddar fundido, tocineta, lechuga y tomate en pan brioche.',
-      cals: 890,
-      ingredients: ['Carne Angus 200g', 'Queso Cheddar', 'Tocineta', 'Pan brioche'],
-      pairing: 'Papas rústicas con ajo y romero'
-    },
-    {
-      id: 12,
-      name: 'Langostinos Tempura',
-      price: 28,
-      cat: 'carnes',
-      img: '../img/langostinos_tempura.webp',
-      desc: 'Langostinos gigantes rebozados al estilo tempura japonesa con salsa dulce de soya.',
-      cals: 360,
-      ingredients: ['Langostinos', 'Masa tempura', 'Salsa de soya dulce'],
-      pairing: 'Cerveza tipo Lager japonesa'
-    },
-    {
-      id: 13,
-      name: 'Pulpo Al Grill',
-      price: 30,
-      cat: 'carnes',
-      img: '../img/pulpo_grill.webp',
-      desc: 'Tentáculo de pulpo marinado a las brasas sobre cama de papas arrugadas y mojo verde canario.',
-      cals: 340,
-      ingredients: ['Pulpo', 'Papas arrugadas', 'Mojo verde', 'Pimentón de la Vera'],
-      pairing: 'Copa de Vino Rosado seco'
-    },
-    {
-      id: 14,
-      name: 'Tartufo De Mortadela (Pizza)',
-      price: 22,
-      cat: 'pizzas',
-      img: '../img/pizzas_tartufo.webp',
-      desc: 'Pizza artesanal con base blanca, mortadela italiana de Bolonia, stracciatella y pistachos.',
-      cals: 820,
-      ingredients: ['Mortadela de Bolonia', 'Stracciatella', 'Crema de pistacho', 'Masa artesanal'],
-      pairing: 'Copa de Vino Espumoso Prosecco'
-    },
-    {
-      id: 15,
-      name: 'Focaccia Rústica Martina',
-      price: 16,
-      cat: 'pizzas',
-      img: '../img/pizzas_tartufo.webp',
-      desc: 'Pan plano italiano horneado con aceite de oliva, sal gruesa, romero fresco y aceitunas negras.',
-      cals: 390,
-      ingredients: ['Romero fresco', 'Aceitunas negras', 'Aceite de oliva extra virgen', 'Sal marina'],
-      pairing: 'Copa de Sangría de frutas'
-    },
-    {
-      id: 16,
-      name: 'Panuzzo Pollo Crispy',
-      price: 18,
-      cat: 'pizzas',
-      img: '../img/hamburguesa.webp',
-      desc: 'Sándwich de masa de pizza relleno de pollo crujiente, mayonesa trufada, rúcula y parmesano.',
-      cals: 680,
-      ingredients: ['Pollo crujiente', 'Masa de pizza', 'Mayonesa trufada', 'Rúcula'],
-      pairing: 'Té frío de durazno'
-    },
-    {
-      id: 17,
-      name: 'Macarrón Con Queso',
-      price: 12,
-      cat: 'infantil',
-      img: '../img/carbonara.webp',
-      desc: 'Pasta corta bañada en deliciosa y cremosa salsa de tres quesos americanos gratinados.',
-      cals: 490,
-      ingredients: ['Cheddar', 'Mozzarella', 'Parmesano', 'Pasta corta'],
-      pairing: 'Jugo de frutas natural'
-    },
-    {
-      id: 18,
-      name: 'Torta Rústica de Chocolate',
-      price: 10,
-      cat: 'postres',
-      img: '../img/torta_chocolate.webp',
-      desc: 'Torta húmeda de chocolate oscuro 70% cacao con cobertura de fudge caliente de chocolate.',
-      cals: 510,
-      ingredients: ['Chocolate 70%', 'Fudge de chocolate', 'Cacao en polvo'],
-      pairing: 'Copa de Vino Dulce Oporto'
-    },
-    {
-      id: 19,
-      name: 'Jugo de Fresa Natural',
-      price: 6,
-      cat: 'bebidas',
-      img: '../img/jugo_fresa.webp',
-      desc: 'Jugo espeso de fresas frescas licuadas, endulzado al gusto y servido bien frío.',
-      cals: 90,
-      ingredients: ['Fresas frescas', 'Agua', 'Hielo'],
-      pairing: 'Ninguno'
-    }
+    {id:1, name:'Carpaccio De Lomito', price:18, cat:'entradas', img:'./img/carpaccio_lomito.webp',
+     desc:'Finas láminas de lomito marinadas con limón, aceite de oliva extra virgen y parmesano.',
+     ingred:['Lomito', 'Parmesano', 'Rúcula', 'Alcaparras', 'Limón'],
+     acomp:'Ligero y fresco: combínalo con la Fosforera Rogasa para abrir con sabor a mar.'},
+    {id:2, name:'Carpaccio De Pulpo', price:22, cat:'entradas', img:'./img/carpaccio_pulpo.webp',
+     desc:'Pulpo tierno en láminas con aceite de oliva, paprika ahumada y toques cítricos.',
+     ingred:['Pulpo', 'Aceite de Oliva', 'Paprika', 'Limón', 'Perejil'],
+     acomp:'Un blanco seco o el Jugo de Fresa Natural equilibran su sabor intenso.'},
+    {id:3, name:'Tequeños Hechos En Casa', price:10, cat:'entradas', img:'./img/tequenos_caseros.webp',
+     desc:'Masa casera rellena de queso semi-curado, fritos al momento.',
+     ingred:['Queso semi-curado', 'Masa casera', 'Guasacaca'],
+     acomp:'Ideales para compartir con la Ensalada Capresa Rogasa como entrada completa.'},
+    {id:4, name:'Ensalada Capresa Rogasa', price:14, cat:'entradas', img:'./img/ensalada_capresa.webp',
+     desc:'Tomate, mozzarella fresca y albahaca con reducción balsámica.',
+     ingred:['Tomate', 'Mozzarella fresca', 'Albahaca', 'Balsámico'],
+     acomp:'Refrescante: acompáñala con el Panuzzo Pollo Crispy para una cena ligera.'},
+    {id:5, name:'Fosforera Rogasa', price:16, cat:'entradas', img:'./img/fosforera_rogasa.webp',
+     desc:'Crema de mariscos con toques de ajo, perejil y mariscos frescos.',
+     ingred:['Mariscos', 'Crema', 'Ajo', 'Perejil', 'Cebollín'],
+     acomp:'Sigue con el Risotto Negro para una experiencia de mar completa.'},
+    {id:6, name:'Spaghetti Carbonara', price:24, cat:'pastas', img:'./img/carbonara.webp',
+     desc:'Pasta al dente con salsa de yema, panceta crujiente y parmesano.',
+     ingred:['Panceta', 'Yema de huevo', 'Parmesano', 'Pimienta negra'],
+     acomp:'La Torta Rústica de Chocolate es el cierre dulce perfecto.'},
+    {id:7, name:'Lasaña De La Abuela', price:22, cat:'pastas', img:'./img/lasana.webp',
+     desc:'Capas de pasta con ragú de carne, bechamel y gratinado de queso.',
+     ingred:['Ragú de carne', 'Bechamel', 'Parmesano', 'Albahaca'],
+     acomp:'Acompáñala con una Ensalada Capresa Rogasa para balancear.'},
+    {id:8, name:'Cartoccio De Lomito', price:26, cat:'pastas', img:'./img/lomito_florencia.webp',
+     desc:'Pasta envuelta en papel de horno con lomito, tomate y hierbas aromáticas.',
+     ingred:['Lomito', 'Tomate', 'Hierbas aromáticas', 'Parmesano'],
+     acomp:'Si vienes con antojo de pasta, el Spaghetti Carbonara es la pareja ideal.'},
+    {id:9, name:'Risotto Negro', price:28, cat:'pastas', img:'./img/risotto_negro.webp',
+     desc:'Arroz cremoso con tinta de calamar, mariscos y un toque de limón.',
+     ingred:['Tinta de calamar', 'Mariscos', 'Arroz', 'Limón'],
+     acomp:'La Fosforera Rogasa abre el apetito perfecto para este plato.'},
+    {id:10, name:'Lomito Florencia', price:36, cat:'carnes', img:'./img/lomito_florencia.webp',
+     desc:'Corte de lomito a la parrilla con salsa de champiñones y gratinado de queso.',
+     ingred:['Lomito', 'Champiñones', 'Queso gratinado', 'Papas'],
+     acomp:'Un vino tinto o el Risotto Negro lo convierten en una velada completa.'},
+    {id:11, name:'Hamburguesa Angus', price:20, cat:'carnes', img:'./img/hamburguesa.webp',
+     desc:'Carne angus jugosa con queso cheddar, tocineta y papas fritas.',
+     ingred:['Angus', 'Cheddar', 'Tocineta', 'Papas fritas'],
+     acomp:'Acompáñala con Tequeños Hechos En Casa para compartir.'},
+    {id:12, name:'Langostinos Tempura', price:28, cat:'carnes', img:'./img/langostinos_tempura.webp',
+     desc:'Langostinos crujientes en tempura con salsa agridulce.',
+     ingred:['Langostinos', 'Tempura', 'Salsa agridulce', 'Sésamo'],
+     acomp:'El Jugo de Fresa Natural refresca perfectamente este plato.'},
+    {id:13, name:'Pulpo Al Grill', price:30, cat:'carnes', img:'./img/pulpo_grill.webp',
+     desc:'Pulpo a la parrilla con papas, pimentón y alioli ahumado.',
+     ingred:['Pulpo', 'Papas', 'Pimentón', 'Alioli ahumado'],
+     acomp:'Combínalo con la Ensalada Capresa para una cena mediterránea.'},
+    {id:14, name:'Tartufo De Mortadela (Pizza)', price:22, cat:'pizzas', img:'./img/pizzas_tartufo.webp',
+     desc:'Pizza con crema de trufa, mortadela y mozzarella fundida.',
+     ingred:['Trufa', 'Mortadela', 'Mozzarella', 'Masa artesanal'],
+     acomp:'Una Focaccia Rústica Martina con aceite de oliva la hace aún mejor.'},
+    {id:15, name:'Focaccia Rústica Martina', price:16, cat:'pizzas', img:'./img/pizzas_tartufo.webp',
+     desc:'Focaccia artesanal con romero, sal marina y aceite de oliva.',
+     ingred:['Romero', 'Aceite de oliva', 'Sal marina', 'Masa madre'],
+     acomp:'Perfecta con la Pizza Tartufo de Mortadela para compartir.'},
+    {id:16, name:'Panuzzo Pollo Crispy', price:18, cat:'pizzas', img:'./img/hamburguesa.webp',
+     desc:'Pan crujiente relleno de pollo empanizado, lechuga y aderezo cremoso.',
+     ingred:['Pollo crispy', 'Lechuga', 'Aderezo cremoso', 'Pan artesanal'],
+     acomp:'Con unos Tequeños Hechos En Casa es la combinación ganadora.'},
+    {id:17, name:'Macarrón Con Queso', price:12, cat:'infantil', img:'./img/carbonara.webp',
+     desc:'Macarrones cremosos con mezcla de quesos gratinados. El favorito de los pequeños.',
+     ingred:['Queso cheddar', 'Queso crema', 'Macarrones'],
+     acomp:'La Torta Rústica de Chocolate hará felices a los niños.'},
+    {id:18, name:'Torta Rústica de Chocolate', price:10, cat:'postres', img:'./img/torta_chocolate.webp',
+     desc:'Torta húmeda de chocolate con corazón fundido y un toque de sal marina.',
+     ingred:['Chocolate 70%', 'Sal marina', 'Mantequilla', 'Huevo'],
+     acomp:'Un café espresso es la excusa perfecta para repetir.'},
+    {id:19, name:'Jugo de Fresa Natural', price:6, cat:'bebidas', img:'./img/jugo_fresa.webp',
+     desc:'Fresas naturales licuadas con un toque de azúcar, sin conservantes.',
+     ingred:['Fresas', 'Azúcar', 'Agua'],
+     acomp:'Acompaña cualquiera de nuestras pastas para un contraste dulce.'}
   ];
 
   const CATEGORIES = ['Todo', 'Entradas', 'Pastas', 'Carnes', 'Pizzas', 'Postres', 'Bebidas', 'Infantil'];
@@ -1052,6 +900,9 @@
     payMethod: 'zelle',
     dismissedOrders: JSON.parse(localStorage.getItem('dismissed_orders') || '[]'),
     trackingId: localStorage.getItem('last_delivery_tracking_id') || null,
+    trackingSubId: null,
+    adminSubscribed: false,
+    reservaType: null,
     unsubscribeTracking: null,
     unsubscribeAdmin: null
   };
@@ -1063,8 +914,11 @@
   window.openDishSheet = openDishSheet;
   window.addToCartFromSheet = addToCartFromSheet;
   window.openWhatsAppReserva = openWhatsAppReserva;
+  window.sendReservaWhatsApp = sendReservaWhatsApp;
+  window.toggleRecomendacion = toggleRecomendacion;
   window.setCategory = setCategory;
   window.renderMenu = renderMenu;
+  window.onSearchInput = onSearchInput;
   window.addToCart = addToCart;
   window.updateCartQuantity = updateCartQuantity;
   window.setPayMethod = setPayMethod;
@@ -1073,7 +927,6 @@
   window.toggleSoldOut = toggleSoldOut;
   window.toggleFavorite = toggleFavorite;
   window.updateOrderStatus = updateOrderStatus;
-  window.showPairingRecommendation = showPairingRecommendation;
   window.dismissOrder = dismissOrder;
   window.sendWhatsAppUpdate = sendWhatsAppUpdate;
   window.checkout = checkout;
@@ -1098,23 +951,6 @@
 
   // NAVIGATION
   function switchTab(tabId) {
-    // Reset PIN auth when LEAVING cocina or ajustes
-    const currentView = document.querySelector('.view.active');
-    if (currentView) {
-      const currentId = currentView.id.replace('view-', '');
-      if (currentId === 'cocina' && tabId !== 'cocina') {
-        document.getElementById('cocina-auth').style.display = 'flex';
-        document.getElementById('cocina-content').style.display = 'none';
-        document.getElementById('cocina-pin').value = '';
-        if(state.unsubscribeAdmin) { state.unsubscribeAdmin(); state.unsubscribeAdmin = null; }
-      }
-      if (currentId === 'ajustes' && tabId !== 'ajustes') {
-        document.getElementById('ajustes-auth').style.display = 'flex';
-        document.getElementById('ajustes-content').style.display = 'none';
-        document.getElementById('ajustes-pin').value = '';
-      }
-    }
-
     document.querySelectorAll('.view').forEach(el => el.classList.remove('active'));
     document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
     
@@ -1126,16 +962,42 @@
     if(tabId === 'seguimiento') initTracking();
     if(tabId === 'cocina' && document.getElementById('cocina-content').style.display !== 'none') initCocina();
     if(tabId === 'ajustes' && document.getElementById('ajustes-content').style.display !== 'none') initAjustes();
+
+    // Ocultar el botón flotante dentro de la vista del carrito
+    const fab = document.getElementById('fab-cart');
+    if(fab) fab.classList.toggle('hidden', tabId === 'carrito');
+
+    // Re-bloquear Cocina y Ajustes al cambiar de vista (pide PIN de nuevo)
+    if(tabId !== 'cocina') {
+      const auth = document.getElementById('cocina-auth');
+      const content = document.getElementById('cocina-content');
+      if(auth) { auth.style.display = ''; content.style.display = 'none'; }
+      const pin = document.getElementById('cocina-pin');
+      if(pin) pin.value = '';
+    }
+    if(tabId !== 'ajustes') {
+      const auth = document.getElementById('ajustes-auth');
+      const content = document.getElementById('ajustes-content');
+      if(auth) { auth.style.display = ''; content.style.display = 'none'; }
+      const pin = document.getElementById('ajustes-pin');
+      if(pin) pin.value = '';
+    }
   }
 
   // UTILS
+  let searchTimer = null;
+  function onSearchInput() {
+    clearTimeout(searchTimer);
+    searchTimer = setTimeout(renderMenu, 120);
+  }
+
   function formatBs(usd) { return `Bs. ${(usd * state.tasa).toFixed(2)}`; }
   function isSoldOut(id) { return state.soldOut.includes(id); }
   function getDish(id) { return MENU.find(d => d.id === id); }
 
   // INICIO VIEW
   function renderCategories() {
-    const cont = document.getElementById('category-chips');
+    const cont = $('category-chips');
     cont.innerHTML = CATEGORIES.map(cat => 
       `<div class="chip ${state.activeCategory === cat ? 'active' : ''}" onclick="setCategory('${cat}')">${cat}</div>`
     ).join('');
@@ -1148,29 +1010,26 @@
   }
 
   function renderFavorites() {
-    const cont = document.getElementById('fav-container');
+    const cont = $('fav-container');
     const favs = MENU.filter(d => state.favorites.includes(d.id));
-    cont.innerHTML = favs.map(d => {
-      const sold = isSoldOut(d.id);
-      return `
-        <div class="fav-card ${sold ? 'sold-out' : ''}" onclick="${sold ? '' : `openDishSheet(${d.id})`}">
-          <img src="${d.img}" class="fav-img">
-          <div class="fav-info">
-            <div class="fav-name">${d.name}</div>
-            <div class="fav-price">$${d.price}</div>
-          </div>
-          ${sold ? `
-          <div class="agotado-overlay">
-            <div class="agotado-badge">Agotado</div>
-          </div>` : ''}
+    cont.innerHTML = favs.map(d => `
+      <div class="fav-card" ${isSoldOut(d.id) ? '' : `onclick="openDishSheet(${d.id})"`}>
+        <img src="${d.img}" class="fav-img" alt="${d.name}" loading="lazy" decoding="async" width="140" height="100">
+        <div class="fav-info">
+          <div class="fav-name">${d.name}</div>
+          <div class="fav-price">$${d.price}</div>
         </div>
-      `;
-    }).join('');
+        ${isSoldOut(d.id) ? `
+        <div class="agotado-overlay">
+          <div class="agotado-badge">Agotado</div>
+        </div>` : ''}
+      </div>
+    `).join('');
   }
 
   function renderMenu() {
-    state.searchQuery = document.getElementById('search-input').value.toLowerCase();
-    const cont = document.getElementById('menu-container');
+    state.searchQuery = $('search-input').value.toLowerCase();
+    const cont = $('menu-container');
     
     let filtered = MENU;
     if (state.activeCategory !== 'Todo') {
@@ -1179,38 +1038,29 @@
     if (state.searchQuery) {
       filtered = filtered.filter(d => d.name.toLowerCase().includes(state.searchQuery));
     }
- 
-    cont.innerHTML = filtered.map(d => {
-      const sold = isSoldOut(d.id);
-      return `
-        <div class="dish-card ${sold ? 'sold-out' : ''}" onclick="${sold ? '' : `openDishSheet(${d.id})`}">
-          <img src="${d.img}" class="dish-img">
-          <div class="dish-info">
-            <div class="dish-name">${d.name}</div>
-            <div class="dish-cat">${d.cat}</div>
-            <div class="dish-desc">${d.desc}</div>
-            <div class="dish-ingredients">
-              ${d.ingredients.map(ing => `<span class="ing-tag">${ing}</span>`).join('')}
+
+    cont.innerHTML = filtered.map(d => `
+      <div class="dish-card" ${isSoldOut(d.id) ? '' : `onclick="openDishSheet(${d.id})"`}>
+        <img src="${d.img}" class="dish-img" alt="${d.name}" loading="lazy" decoding="async" width="80" height="80">
+        <div class="dish-info">
+          <div class="dish-name">${d.name}</div>
+          <div class="dish-cat">${d.cat}</div>
+          <div class="dish-price-row">
+            <div>
+              <span class="dish-price">$${d.price}</span>
+              <span class="dish-price-bs">${formatBs(d.price)}</span>
             </div>
-            <div class="dish-price-row">
-              <div>
-                <span class="dish-price">$${d.price}</span>
-                <span class="dish-price-bs">${formatBs(d.price)}</span>
-              </div>
-              ${sold ? '' : `
-              <button class="dish-add" onclick="event.stopPropagation(); addToCart(${d.id})">
-                <svg viewBox="0 0 24 24" style="width:16px;height:16px"><path d="M12 5v14M5 12h14"/></svg>
-              </button>
-              `}
-            </div>
+            <button class="dish-add" onclick="event.stopPropagation(); ${isSoldOut(d.id) ? '' : `addToCart(${d.id})`}">
+              <svg viewBox="0 0 24 24" style="width:16px;height:16px"><path d="M12 5v14M5 12h14"/></svg>
+            </button>
           </div>
-          ${sold ? `
-          <div class="agotado-overlay" style="border-radius:12px">
-            <div class="agotado-badge">Agotado</div>
-          </div>` : ''}
         </div>
-      `;
-    }).join('');
+        ${isSoldOut(d.id) ? `
+        <div class="agotado-overlay" style="border-radius:12px">
+          <div class="agotado-badge">Agotado</div>
+        </div>` : ''}
+      </div>
+    `).join('');
   }
 
   // BOTTOM SHEETS
@@ -1226,18 +1076,16 @@
     
     document.getElementById('sd-img').src = d.img;
     document.getElementById('sd-name').textContent = d.name;
-    document.getElementById('sd-desc').textContent = d.desc;
     document.getElementById('sd-price-usd').textContent = `$${d.price}`;
     document.getElementById('sd-price-bs').textContent = formatBs(d.price);
-    
-    const ingCont = document.getElementById('sd-ingredients');
-    ingCont.innerHTML = d.ingredients.map(ing => `<span class="ing-tag">${ing}</span>`).join('');
-    
+    document.getElementById('sd-desc').textContent = d.desc || 'Preparado con ingredientes frescos y la receta original de Rogasa Café.';
+    document.getElementById('sd-ingred').innerHTML = (d.ingred || []).map(i => `<span class="ingred-chip">${i}</span>`).join('');
 
-
-    // Reset pairing result
-    document.getElementById('sd-pairing-btn').style.display = 'flex';
-    document.getElementById('sd-pairing-result').style.display = 'none';
+    const pairBox = document.getElementById('sd-pair');
+    pairBox.textContent = d.acomp || '';
+    pairBox.style.display = 'none';
+    document.getElementById('sd-pair-btn').textContent = 'Recomendar acompañamiento';
+    document.getElementById('sd-pair-btn').style.display = d.acomp ? '' : 'none';
     
     const btn = document.getElementById('sd-add-btn');
     if(isSoldOut(id)) {
@@ -1252,27 +1100,11 @@
     document.getElementById('sheet-dish').classList.add('active');
   }
 
-  function showPairingRecommendation() {
-    const d = getDish(state.selectedDishId);
-    if (!d) return;
-    
-    const btn = document.getElementById('sd-pairing-btn');
-    const result = document.getElementById('sd-pairing-result');
-    const val = document.getElementById('sd-pairing-value');
-    
-    btn.innerHTML = `<svg class="spinner" viewBox="0 0 50 50" style="width:16px;height:16px;margin-right:8px;animation:rotate 1s linear infinite;stroke:var(--c-gold);"><circle cx="25" cy="25" r="20" fill="none" stroke="currentColor" stroke-width="5" stroke-linecap="round"></circle></svg> Seleccionando acompañamiento...`;
-    btn.style.opacity = '0.7';
-    btn.style.pointerEvents = 'none';
-    
-    setTimeout(() => {
-      btn.style.display = 'none';
-      btn.style.opacity = '1';
-      btn.style.pointerEvents = 'auto';
-      btn.innerHTML = `<svg viewBox="0 0 24 24" style="width:16px;height:16px;stroke:var(--c-gold);fill:none;margin-right:8px"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg> Recomendar Acompañamiento`;
-      
-      val.textContent = d.pairing;
-      result.style.display = 'block';
-    }, 600);
+  function toggleRecomendacion() {
+    const box = document.getElementById('sd-pair');
+    const show = box.style.display === 'none';
+    box.style.display = show ? 'block' : 'none';
+    document.getElementById('sd-pair-btn').textContent = show ? 'Ocultar recomendación' : 'Recomendar acompañamiento';
   }
 
   function closeSheets() {
@@ -1280,11 +1112,56 @@
     document.querySelectorAll('.bottom-sheet').forEach(el => el.classList.remove('active'));
   }
 
+  const RESERVA_SERVICIOS = {
+    evento:      { title: 'Eventos y Reservaciones',   nombre: 'Evento Especial' },
+    degustacion: { title: 'Menú Degustación del Chef', nombre: 'Menú Degustación del Chef' },
+    musica:      { title: 'Música en Vivo (Viernes)',  nombre: 'Música en Vivo (Viernes)' }
+  };
+
   function openWhatsAppReserva(type) {
-    let msg = '';
-    if(type==='evento') msg = 'Hola Rogasa, me gustaría información para reservar un evento especial.';
-    if(type==='degustacion') msg = 'Hola Rogasa, me gustaría reservar para el Menú Degustación del Chef.';
-    if(type==='musica') msg = 'Hola Rogasa, quiero reservar una mesa para el Viernes de Música en Vivo.';
+    const s = RESERVA_SERVICIOS[type];
+    if(!s) return;
+    state.reservaType = type;
+
+    // Limpiar campos del formulario anterior
+    ['rv-name','rv-phone','rv-date','rv-time','rv-pax','rv-msg'].forEach(id => {
+      document.getElementById(id).value = '';
+    });
+
+    document.getElementById('rv-title').textContent = s.title;
+    document.getElementById('sheet-overlay').classList.add('active');
+    document.getElementById('sheet-services').classList.remove('active');
+    document.getElementById('sheet-reserva').classList.add('active');
+  }
+
+  function sendReservaWhatsApp() {
+    const name = $('rv-name').value.trim();
+    const phone = $('rv-phone').value.trim();
+    const date = $('rv-date').value;
+    const time = $('rv-time').value;
+    const pax = $('rv-pax').value.trim();
+    const extra = $('rv-msg').value.trim();
+
+    if(!name || !phone || !date) {
+      alert('Completa al menos nombre, teléfono y fecha.');
+      return;
+    }
+
+    const fecha = new Date(date + 'T00:00:00').toLocaleDateString('es-VE', {day:'2-digit', month:'2-digit', year:'numeric'});
+    const s = RESERVA_SERVICIOS[state.reservaType] || { nombre: state.reservaType };
+
+    let msg = `*ROGASA CAFE — Reserva*`;
+    msg += `\n━━━━━━━━━━━━━━━━━━━━━━━━`;
+    msg += `\n*Servicio:* ${s.nombre}`;
+    msg += `\n*Nombre:* ${name}`;
+    msg += `\n*Telefono:* ${phone}`;
+    if(date) msg += `\n*Fecha:* ${fecha}`;
+    if(time) msg += `\n*Hora:* ${time}`;
+    if(pax) msg += `\n*Personas:* ${pax}`;
+    if(extra) msg += `\n*Comentarios:* ${extra}`;
+    msg += `\n━━━━━━━━━━━━━━━━━━━━━━━━`;
+    msg += `\nRogasa Cafe — Gracias por tu preferencia.`;
+
     window.open(`https://wa.me/${WHATSAPP_NUM}?text=${encodeURIComponent(msg)}`, '_blank');
     closeSheets();
   }
@@ -1307,11 +1184,19 @@
   }
 
   function updateCartBadge() {
-    const badge = document.getElementById('cart-badge');
+    const badge = $('cart-badge');
     const count = state.cart.reduce((s, i) => s + i.q, 0);
     badge.textContent = count;
     if(count > 0) badge.classList.add('visible');
     else badge.classList.remove('visible');
+
+    // Pequeña animación al agregar un plato
+    const fab = document.getElementById('fab-cart');
+    if(fab && count > 0) {
+      fab.classList.remove('bump');
+      void fab.offsetWidth;
+      fab.classList.add('bump');
+    }
   }
 
   function updateCartQuantity(id, delta) {
@@ -1329,8 +1214,8 @@
   }
 
   function renderCart() {
-    const content = document.getElementById('cart-content');
-    const empty = document.getElementById('cart-empty');
+    const content = $('cart-content');
+    const empty = $('cart-empty');
     
     if(state.cart.length === 0) {
       content.style.display = 'none';
@@ -1341,6 +1226,15 @@
     content.style.display = 'block';
     empty.style.display = 'none';
 
+    // Preservar los datos de entrega ya escritos al re-renderizar el carrito
+    // (p.ej. al cambiar el método de pago o ajustar cantidades)
+    const prevEntrega = {
+      name: $('c-name') ? $('c-name').value : '',
+      phone: $('c-phone') ? $('c-phone').value : '',
+      sector: $('c-sector') ? $('c-sector').value : '',
+      ref: $('c-ref') ? $('c-ref').value : ''
+    };
+
     let totalUsd = 0;
     
     let html = `<div style="margin-bottom:24px">`;
@@ -1348,7 +1242,7 @@
       totalUsd += i.price * i.q;
       html += `
         <div class="cart-item">
-          <img src="${i.img}" class="cart-item-img">
+          <img src="${i.img}" class="cart-item-img" alt="${i.name}" loading="lazy" decoding="async" width="60" height="60">
           <div class="cart-item-info">
             <div class="cart-item-name">${i.name}</div>
             <div class="cart-item-price">$${i.price}</div>
@@ -1406,6 +1300,15 @@
     `;
 
     content.innerHTML = html;
+
+    // Restaurar los datos de entrega tras reconstruir el HTML
+    const cName = $('c-name'), cPhone = $('c-phone'), cSector = $('c-sector'), cRef = $('c-ref');
+    if(cName) {
+      cName.value = prevEntrega.name;
+      cPhone.value = prevEntrega.phone;
+      cSector.value = prevEntrega.sector;
+      cRef.value = prevEntrega.ref;
+    }
   }
 
   async function checkout() {
@@ -1419,8 +1322,9 @@
       return;
     }
 
-    const totalUsd = state.cart.reduce((s,i) => s + (i.price * i.q), 0) + 2;
-    const items = state.cart.map(i => ({id: i.id, nombre: i.name, cantidad: i.q, precio: i.price}));
+    const cartItems = state.cart.map(i => ({ ...i }));
+    const totalUsd = cartItems.reduce((s,i) => s + (i.price * i.q), 0) + 2;
+    const items = cartItems.map(i => ({id: i.id, nombre: i.name, cantidad: i.q, precio: i.price}));
     
     const pedido = {
       id: db.generarIdUnico(),
@@ -1450,7 +1354,7 @@
     msg += `*Direccion:* ${sector}${ref ? ' — ' + ref : ''}\n`;
     msg += `━━━━━━━━━━━━━━━━━━━━━━━━\n`;
     msg += `*Detalle del Pedido:*\n\n`;
-    state.cart.forEach(i => {
+    cartItems.forEach(i => {
       const lineUsd = (i.price * i.q).toFixed(2);
       const lineBs = (i.price * i.q * state.tasa).toFixed(2);
       msg += `  ${i.q}x ${i.name}\n`;
@@ -1486,8 +1390,11 @@
     empty.style.display = 'none';
     document.getElementById('track-id').textContent = state.trackingId;
 
+    // Ya estamos suscritos a este pedido: no re-suscribir al cambiar de pestaña
+    if(state.unsubscribeTracking && state.trackingSubId === state.trackingId) return;
+
     if(state.unsubscribeTracking) state.unsubscribeTracking();
-    
+    state.trackingSubId = state.trackingId;
     state.unsubscribeTracking = db.suscribirAPedido(state.trackingId, (pedido) => {
       if(!pedido) return;
       updateStepper(pedido.estado);
@@ -1505,7 +1412,7 @@
       else if (i < idx) el.classList.add('completed', 'active');
     });
 
-    const prog = document.getElementById('track-progress');
+    const prog = $('track-progress');
     prog.style.height = `${idx * 33.33}%`;
   }
 
@@ -1521,54 +1428,80 @@
     }
   }
 
+  function buildOrderCard(p) {
+    const time = new Date(p.creado_en || p.creado_el).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+    return `
+      <div class="order-card" id="order-${p.id}">
+        <button class="order-close" onclick="dismissOrder('${p.id}')">
+          <svg viewBox="0 0 24 24" style="width:20px;height:20px"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+        </button>
+        <div class="order-header">
+          <span class="order-id">${p.id}</span>
+          <span class="order-time">${time}</span>
+        </div>
+        <div class="order-client">${p.cliente_nombre}</div>
+        <div class="order-meta">
+          Tel: ${p.telefono}<br>
+          Dir: ${p.ubicacion}<br>
+          ${(p.metodo_pago || '').toUpperCase()} - $${p.total_usd.toFixed(2)} / Bs. ${(p.total_bs || p.total_usd * 45).toFixed(2)}
+        </div>
+        <div class="order-items">
+          ${p.items.map(i => `<div class="order-item"><span class="order-item-q">${i.cantidad || i.q || 1}x</span><span>${i.nombre || i.name}</span></div>`).join('')}
+        </div>
+        <div class="status-buttons">
+          <button class="status-btn ${p.estado==='recibido'?'active':''}" onclick="updateOrderStatus('${p.id}', 'recibido')">Recibido</button>
+          <button class="status-btn ${p.estado==='cocina'?'active':''}" onclick="updateOrderStatus('${p.id}', 'cocina')">Cocina</button>
+          <button class="status-btn ${p.estado==='reparto'?'active':''}" onclick="updateOrderStatus('${p.id}', 'reparto')">Reparto</button>
+          <button class="status-btn ${p.estado==='entregado'?'active':''}" onclick="updateOrderStatus('${p.id}', 'entregado')">Entregado</button>
+        </div>
+        <button class="whatsapp-btn" onclick="sendWhatsAppUpdate('${p.telefono}', '${p.id}', '${p.estado}')">
+          <svg viewBox="0 0 24 24" style="width:16px;height:16px"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"></path></svg>
+          Notificar Cliente
+        </button>
+      </div>
+    `;
+  }
+
   function initCocina() {
-    if(state.unsubscribeAdmin) state.unsubscribeAdmin();
-    
+    // Ya estamos escuchando: no re-suscribir (evita refetch en cada cambio de pestaña)
+    if(state.adminSubscribed) return;
+    state.adminSubscribed = true;
+
     state.unsubscribeAdmin = db.suscribirATodosLosPedidos((pedidos) => {
-      const cont = document.getElementById('orders-container');
-      
+      const cont = $('orders-container');
       const filtered = pedidos.filter(p => !state.dismissedOrders.includes(p.id));
-      
+
       if(filtered.length === 0) {
         cont.innerHTML = `<div class="empty-state"><p>No hay pedidos activos.</p></div>`;
         return;
       }
-      
-      filtered.sort((a,b) => new Date(b.creado_en) - new Date(a.creado_en));
-      
-      cont.innerHTML = filtered.map(p => {
-        const time = new Date(p.creado_en).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
-        return `
-          <div class="order-card" id="order-${p.id}">
-            <button class="order-close" onclick="dismissOrder('${p.id}')">
-              <svg viewBox="0 0 24 24" style="width:20px;height:20px"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
-            </button>
-            <div class="order-header">
-              <span class="order-id">${p.id}</span>
-              <span class="order-time">${time}</span>
-            </div>
-            <div class="order-client">${p.cliente_nombre}</div>
-            <div class="order-meta">
-              Tel: ${p.telefono}<br>
-              Dir: ${p.ubicacion}<br>
-              ${p.metodo_pago.toUpperCase()} - $${p.total_usd.toFixed(2)} / Bs. ${(p.total_bs || p.total_usd * 45).toFixed(2)}
-            </div>
-            <div class="order-items">
-              ${p.items.map(i => `<div class="order-item"><span class="order-item-q">${i.cantidad}x</span><span>${i.nombre}</span></div>`).join('')}
-            </div>
-            <div class="status-buttons">
-              <button class="status-btn ${p.estado==='recibido'?'active':''}" onclick="updateOrderStatus('${p.id}', 'recibido')">Recibido</button>
-              <button class="status-btn ${p.estado==='cocina'?'active':''}" onclick="updateOrderStatus('${p.id}', 'cocina')">Cocina</button>
-              <button class="status-btn ${p.estado==='reparto'?'active':''}" onclick="updateOrderStatus('${p.id}', 'reparto')">Reparto</button>
-              <button class="status-btn ${p.estado==='entregado'?'active':''}" onclick="updateOrderStatus('${p.id}', 'entregado')">Entregado</button>
-            </div>
-            <button class="whatsapp-btn" onclick="sendWhatsAppUpdate('${p.telefono}', '${p.id}', '${p.estado}')">
-              <svg viewBox="0 0 24 24" style="width:16px;height:16px"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"></path></svg>
-              Notificar Cliente
-            </button>
-          </div>
-        `;
-      }).join('');
+
+      const empty = cont.querySelector('.empty-state');
+      if(empty) empty.remove();
+
+      filtered.sort((a,b) => new Date(b.creado_en || b.creado_el) - new Date(a.creado_en || a.creado_el));
+
+      // Render diferencial: solo reconstruir las tarjetas que cambiaron
+      const htmlById = {};
+      filtered.forEach(p => { htmlById[p.id] = buildOrderCard(p); });
+
+      [...cont.children].forEach(child => {
+        if(child.id && child.id.startsWith('order-') && !htmlById[child.id.replace('order-','')]) child.remove();
+      });
+
+      filtered.forEach(p => {
+        const el = document.getElementById('order-' + p.id);
+        if(!el) {
+          cont.insertAdjacentHTML('beforeend', htmlById[p.id]);
+          const nuevo = document.getElementById('order-' + p.id);
+          if(nuevo) nuevo.dataset.html = htmlById[p.id];
+        } else if(el.dataset.html !== htmlById[p.id]) {
+          const tmp = document.createElement('div');
+          tmp.innerHTML = htmlById[p.id];
+          el.replaceWith(tmp.firstElementChild);
+          if(tmp.firstElementChild) tmp.firstElementChild.dataset.html = htmlById[p.id];
+        }
+      });
     });
   }
 
@@ -1607,7 +1540,7 @@
     // Tasa is bound to input
     
     // Disponibilidad
-    const dispCont = document.getElementById('settings-disponibilidad');
+    const dispCont = $('settings-disponibilidad');
     dispCont.innerHTML = MENU.map(d => `
       <div class="settings-item">
         <div class="settings-item-info">
@@ -1622,7 +1555,7 @@
     `).join('');
     
     // Favoritos
-    const favCont = document.getElementById('settings-favoritos');
+    const favCont = $('settings-favoritos');
     favCont.innerHTML = MENU.map(d => `
       <div class="settings-item">
         <div class="settings-item-info">

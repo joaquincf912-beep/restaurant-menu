@@ -12,14 +12,21 @@ const firebaseConfig = {
 };
 
 // Initialize Firebase using global window.firebase
+// Guard: si el SDK de Firebase no carga (sin red / CDN bloqueado), la app
+// sigue funcionando de forma degradada (menú visible, pedidos sin sync).
 const firebase = window.firebase;
-let app;
-if (!firebase.apps.length) {
-    app = firebase.initializeApp(firebaseConfig);
+let app = null;
+let database = null;
+if (firebase && firebase.initializeApp) {
+    if (!firebase.apps.length) {
+        app = firebase.initializeApp(firebaseConfig);
+    } else {
+        app = firebase.app();
+    }
+    database = firebase.database();
 } else {
-    app = firebase.app();
+    console.warn('Firebase SDK no disponible — la app funcionará sin sincronización en tiempo real.');
 }
-const database = firebase.database();
 
 export const db = {
 
@@ -41,6 +48,11 @@ export const db = {
             creado_en: new Date().toISOString()
         };
 
+        if (!database) {
+            console.warn('Firebase no disponible: el pedido no se guardará en la nube.');
+            return nuevoPedido;
+        }
+
         try {
             await database.ref('orders/' + nuevoPedido.id).set(nuevoPedido);
         } catch (e) {
@@ -51,6 +63,7 @@ export const db = {
     },
 
     async obtenerPedido(id) {
+        if (!database) return null;
         try {
             const snapshot = await database.ref('orders/' + id).get();
             if (snapshot.exists()) return snapshot.val();
@@ -61,6 +74,7 @@ export const db = {
     },
 
     async obtenerPedidosActivos() {
+        if (!database) return [];
         try {
             const snapshot = await database.ref('orders').get();
             if (snapshot.exists()) return Object.values(snapshot.val());
@@ -71,6 +85,7 @@ export const db = {
     },
 
     async actualizarEstado(id, nuevoEstado) {
+        if (!database) return null;
         try {
             await database.ref('orders/' + id).update({ estado: nuevoEstado });
             const snapshot = await database.ref('orders/' + id).get();
@@ -82,6 +97,10 @@ export const db = {
     },
 
     suscribirAPedido(id, callback) {
+        if (!database) {
+            callback(null);
+            return () => {};
+        }
         const orderRef = database.ref('orders/' + id);
         orderRef.on('value', (snapshot) => {
             if (snapshot.exists()) {
@@ -92,6 +111,10 @@ export const db = {
     },
 
     suscribirATodosLosPedidos(callback) {
+        if (!database) {
+            callback([]);
+            return () => {};
+        }
         const ordersRef = database.ref('orders');
         ordersRef.on('value', (snapshot) => {
             if (snapshot.exists()) {

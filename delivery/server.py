@@ -3,6 +3,7 @@ import http.server
 import socketserver
 import json
 import os
+import gzip
 import urllib.parse
 import time
 import threading
@@ -85,10 +86,67 @@ class ThreadingHTTPServer(socketserver.ThreadingMixIn, http.server.HTTPServer):
     daemon_threads = True
 
 class LiveTrackingHandler(http.server.SimpleHTTPRequestHandler):
+    CONTENT_TYPES = {
+        '.html': 'text/html; charset=utf-8',
+        '.css': 'text/css',
+        '.js': 'application/javascript',
+        '.json': 'application/json',
+        '.webp': 'image/webp',
+        '.png': 'image/png',
+        '.jpg': 'image/jpeg',
+        '.jpeg': 'image/jpeg',
+        '.svg': 'image/svg+xml',
+        '.ico': 'image/x-icon',
+        '.woff2': 'font/woff2',
+    }
+
     def send_cors_headers(self):
         self.send_header('Access-Control-Allow-Origin', '*')
         self.send_header('Access-Control-Allow-Methods', 'GET, POST, PUT, OPTIONS')
         self.send_header('Access-Control-Allow-Headers', 'Content-Type')
+
+    def get_content_type(self, path):
+        ext = os.path.splitext(path)[1].lower()
+        return self.CONTENT_TYPES.get(ext, 'application/octet-stream')
+
+    def serve_file(self, file_path):
+        try:
+            with open(file_path, 'rb') as f:
+                body = f.read()
+        except OSError:
+            self.send_response(404)
+            self.end_headers()
+            return
+
+        ctype = self.get_content_type(file_path)
+        is_compressible = ctype.startswith('text/') or ctype in (
+            'application/javascript', 'application/json', 'image/svg+xml')
+
+        # Assets inmutables: cache largo. HTML/JS: siempre revalidar.
+        if file_path.endswith(('.webp', '.png', '.jpg', '.jpeg', '.svg', '.woff2', '.ico')):
+            cache = 'public, max-age=604800, immutable'
+        else:
+            cache = 'no-cache'
+
+        if is_compressible and 'gzip' in self.headers.get('Accept-Encoding', ''):
+            body = gzip.compress(body, 6)
+            self.send_response(200)
+            self.send_header('Content-Type', ctype)
+            self.send_header('Content-Encoding', 'gzip')
+            self.send_header('Vary', 'Accept-Encoding')
+        else:
+            self.send_response(200)
+            self.send_header('Content-Type', ctype)
+        self.send_header('Content-Length', str(len(body)))
+        self.send_header('Cache-Control', cache)
+        self.send_cors_headers()
+        self.end_headers()
+        if self.command != 'HEAD':
+            self.wfile.write(body)
+
+    def do_HEAD(self):
+        # Mismo comportamiento que GET (headers, gzip y caché), sin enviar el cuerpo.
+        self.do_GET()
 
     def do_OPTIONS(self):
         self.send_response(200)
@@ -189,43 +247,26 @@ class LiveTrackingHandler(http.server.SimpleHTTPRequestHandler):
 
         # ── SERVE STATIC FILES ──
         else:
-            # Map request path to local folder structure
-            base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-            # Strip '/delivery' prefix if present to match request routing
-            rel_path = path.replace('/delivery', '')
-            if rel_path.startswith('/'):
-                rel_path = rel_path[1:]
-            if not rel_path or rel_path == '':
-                rel_path = 'delivery/index.html'
-            elif not rel_path.startswith('delivery/'):
-                rel_path = 'delivery/' + rel_path
+            # Busca en este directorio (layout standalone) y en el layout
+            # legacy 'delivery/' del proyecto principal.
+            server_dir = os.path.dirname(os.path.abspath(__file__))
+            parent_dir = os.path.dirname(server_dir)
 
-            file_path = os.path.join(base_dir, rel_path)
-            # Fallback for main parent assets (like img/ logo, etc.)
-            if not os.path.exists(file_path):
-                # Check directly in parent dir (e.g. img/logo.webp)
-                rel_parent = path.replace('/delivery', '')
-                if rel_parent.startswith('/'):
-                    rel_parent = rel_parent[1:]
-                file_path = os.path.join(base_dir, rel_parent)
+            rel = path.replace('/delivery', '')
+            if rel.startswith('/'):
+                rel = rel[1:]
+            if not rel or rel == '':
+                rel = 'index.html'
 
-            if os.path.exists(file_path) and os.path.isfile(file_path):
-                self.send_response(200)
-                # Content type detection
-                if file_path.endswith('.html'):
-                    self.send_header('Content-Type', 'text/html; charset=utf-8')
-                elif file_path.endswith('.css'):
-                    self.send_header('Content-Type', 'text/css')
-                elif file_path.endswith('.js'):
-                    self.send_header('Content-Type', 'application/javascript')
-                elif file_path.endswith('.webp'):
-                    self.send_header('Content-Type', 'image/webp')
-                elif file_path.endswith('.svg'):
-                    self.send_header('Content-Type', 'image/svg+xml')
-                self.send_cors_headers()
-                self.end_headers()
-                with open(file_path, 'rb') as f:
-                    self.wfile.write(f.read())
+            candidates = [
+                os.path.join(server_dir, rel),
+                os.path.join(server_dir, 'delivery', rel),
+                os.path.join(parent_dir, 'delivery', rel),
+            ]
+            file_path = next((c for c in candidates if os.path.isfile(c)), None)
+
+            if file_path:
+                self.serve_file(file_path)
             else:
                 self.send_response(404)
                 self.end_headers()
