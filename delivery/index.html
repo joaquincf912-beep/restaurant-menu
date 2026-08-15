@@ -2,6 +2,16 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8">
+  <script>
+    const h = window.location.hostname;
+    let b = '/';
+    if (h === 'menu.traccionweb.com') {
+      b = '/delivery/';
+    } else if (h === 'traccionweb.com' || h === 'www.traccionweb.com') {
+      b = '/menu/delivery/';
+    }
+    document.write('<base href="' + b + '">');
+  </script>
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>Rogasa Café - Delivery</title>
   <style>
