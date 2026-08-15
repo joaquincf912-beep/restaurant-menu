@@ -1311,7 +1311,7 @@
     }
   }
 
-  async function checkout() {
+  function checkout() {
     const name = document.getElementById('c-name')?.value;
     const phone = document.getElementById('c-phone')?.value;
     const sector = document.getElementById('c-sector')?.value;
@@ -1337,13 +1337,6 @@
       items: items
     };
 
-    await db.crearPedido(pedido);
-    
-    state.cart = [];
-    updateCartBadge();
-    state.trackingId = pedido.id;
-    localStorage.setItem('last_delivery_tracking_id', state.trackingId);
-    
     const payLabels = {efectivo:'Efectivo',transferencia:'Transferencia Bancaria',zelle:'Zelle'};
     const trackUrl = `https://menu.traccionweb.com/delivery/?id=${pedido.id}`;
     let msg = `*ROGASA CAFE — Pedido a Domicilio*\n`;
@@ -1370,9 +1363,20 @@
     msg += `*Tasa del dia:* Bs. ${state.tasa.toFixed(2)} / $1\n\n`;
     msg += `Sigue tu pedido en vivo:\n${trackUrl}\n\n`;
     msg += `Rogasa Cafe — Gracias por tu preferencia.`;
+
+    // 1) Abrir WhatsApp INMEDIATO: sin esperar Firebase, dentro del gesto del click
+    //    (un await antes de window.open ralentiza la transición y puede disparar el bloqueador de popups)
     window.open(`https://wa.me/${WHATSAPP_NUM}?text=${encodeURIComponent(msg)}`, '_blank');
-    
+
+    // 2) Pasar al seguimiento al instante
+    state.cart = [];
+    updateCartBadge();
+    state.trackingId = pedido.id;
+    localStorage.setItem('last_delivery_tracking_id', state.trackingId);
     switchTab('seguimiento');
+
+    // 3) Guardar en Firebase en segundo plano — no bloquea la transición
+    db.crearPedido(pedido).catch(err => console.error('No se pudo guardar el pedido:', err));
   }
 
   // TRACKING
