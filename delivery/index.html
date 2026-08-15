@@ -154,6 +154,9 @@
       width: 100%;
     }
 
+    /* Tamaño táctil mínimo cómodo en todos los botones principales */
+    .btn-primary, .btn-outline, .whatsapp-btn, .status-btn { min-height: 44px; }
+
     /* ICONS */
     svg { fill: none; stroke: currentColor; stroke-width: 1.5; stroke-linecap: round; stroke-linejoin: round; }
 
@@ -431,6 +434,24 @@
     }
     .bottom-sheet.active { bottom: 0; }
     .sheet-handle { width: 40px; height: 4px; background: var(--c-border-h); border-radius: 2px; margin: 12px auto; }
+    .sheet-close {
+      position: absolute;
+      top: 10px;
+      right: 12px;
+      width: 38px;
+      height: 38px;
+      min-height: 38px;
+      border-radius: 50%;
+      background: var(--c-surface-2);
+      border: 1px solid var(--c-border);
+      color: var(--c-text-2);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 6;
+      transition: transform 0.12s ease, color 0.2s ease, border-color 0.2s ease;
+    }
+    .sheet-close:active { transform: scale(0.9); color: var(--c-gold); }
     .sheet-content { padding: 0 20px 20px; overflow-y: auto; }
     
     .sheet-img { width: 100%; height: 200px; object-fit: cover; border-radius: 12px; margin-bottom: 16px; }
@@ -817,6 +838,9 @@
   <!-- Dish Detail Sheet -->
   <div class="bottom-sheet" id="sheet-dish">
     <div class="sheet-handle"></div>
+    <button class="sheet-close" onclick="closeSheets()" aria-label="Cerrar">
+      <svg viewBox="0 0 24 24" style="width:16px;height:16px"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+    </button>
     <div class="sheet-content">
       <img src="" class="sheet-img" id="sd-img" alt="" loading="lazy" decoding="async" width="480" height="200">
       <div class="sheet-title" id="sd-name"></div>
@@ -835,6 +859,9 @@
   <!-- Reservation Form Sheet -->
   <div class="bottom-sheet" id="sheet-reserva">
     <div class="sheet-handle"></div>
+    <button class="sheet-close" onclick="closeSheets()" aria-label="Cerrar">
+      <svg viewBox="0 0 24 24" style="width:16px;height:16px"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+    </button>
     <div class="sheet-content">
       <div class="sheet-title" id="rv-title" style="margin-bottom:8px"></div>
       <div class="subtitle" style="margin-bottom:20px">Completa tus datos y confirma tu reserva por WhatsApp</div>
@@ -853,6 +880,9 @@
   <!-- Services Sheet -->
   <div class="bottom-sheet" id="sheet-services">
     <div class="sheet-handle"></div>
+    <button class="sheet-close" onclick="closeSheets()" aria-label="Cerrar">
+      <svg viewBox="0 0 24 24" style="width:16px;height:16px"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+    </button>
     <div class="sheet-content">
       <div class="sheet-title" style="margin-bottom:24px">Servicios Rogasa</div>
       
@@ -1250,8 +1280,48 @@
 
   function closeSheets() {
     document.getElementById('sheet-overlay').classList.remove('active');
-    document.querySelectorAll('.bottom-sheet').forEach(el => el.classList.remove('active'));
+    document.querySelectorAll('.bottom-sheet').forEach(el => {
+      el.classList.remove('active');
+      el.style.transform = '';
+      el.style.transition = '';
+    });
   }
+
+  // SWIPE PARA CERRAR: deslizar la hoja hacia abajo (estilo app nativa)
+  document.querySelectorAll('.bottom-sheet').forEach(sheet => {
+    const content = sheet.querySelector('.sheet-content');
+    let startY = 0, dragging = false, suppress = false;
+
+    sheet.addEventListener('touchstart', (e) => {
+      startY = e.touches[0].clientY;
+      dragging = true;
+      suppress = false;
+      sheet.style.transition = 'none';
+    }, { passive: true });
+
+    sheet.addEventListener('touchmove', (e) => {
+      if (!dragging) return;
+      const dy = e.touches[0].clientY - startY;
+      // No arrastrar hacia arriba ni interferir con el scroll del contenido
+      if (dy <= 0 || (content && content.scrollTop > 0)) { suppress = true; return; }
+      suppress = false;
+      e.preventDefault();
+      sheet.style.transform = `translateX(-50%) translateY(${(dy * 0.6).toFixed(1)}px)`;
+    }, { passive: false });
+
+    sheet.addEventListener('touchend', (e) => {
+      if (!dragging) return;
+      dragging = false;
+      const dy = e.changedTouches[0].clientY - startY;
+      if (!suppress && dy > 90) {
+        closeSheets();
+      } else {
+        sheet.style.transition = 'transform 0.25s ease';
+        sheet.style.transform = '';
+        setTimeout(() => { sheet.style.transition = ''; }, 260);
+      }
+    }, { passive: true });
+  });
 
   const RESERVA_SERVICIOS = {
     evento:      { title: 'Eventos y Reservaciones',   nombre: 'Evento Especial' },
