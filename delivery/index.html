@@ -1176,9 +1176,9 @@
             </div>
             <div class="order-client">${p.cliente_nombre}</div>
             <div class="order-meta">
-              📞 ${p.telefono}<br>
-              📍 ${p.ubicacion}<br>
-              💳 ${p.metodo_pago.toUpperCase()} - $${p.total_usd.toFixed(2)}
+              Tel: ${p.telefono}<br>
+              Dir: ${p.ubicacion}<br>
+              ${p.metodo_pago.toUpperCase()} - $${p.total_usd.toFixed(2)} / Bs. ${(p.total_bs || p.total_usd * 45).toFixed(2)}
             </div>
             <div class="order-items">
               ${p.items.map(i => `<div class="order-item"><span class="order-item-q">${i.cantidad}x</span><span>${i.nombre}</span></div>`).join('')}

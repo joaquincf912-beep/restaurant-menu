@@ -1,11 +1,25 @@
-// db.js - Conexión de Datos en Tiempo Real (SSE / REST) para App de Domicilios
-// Diseñado para Rogasa Café
+// db.js - Sistema de Datos para App de Domicilios Rogasa Café
+// Funciona con localStorage en produccion y con servidor local (SSE) en desarrollo
 
-const DB_SERVER = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
-    ? 'http://localhost:8085'
-    : window.location.origin;
+const IS_LOCAL = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+const DB_SERVER = IS_LOCAL ? `http://localhost:8085` : null;
+const LS_KEY = 'rogasa_delivery_orders';
+
+function getLocalOrders() {
+    try { return JSON.parse(localStorage.getItem(LS_KEY) || '{}'); }
+    catch(e) { return {}; }
+}
+
+function saveLocalOrders(orders) {
+    localStorage.setItem(LS_KEY, JSON.stringify(orders));
+}
+
+function jsonParseSafe(str) {
+    try { return JSON.parse(str); } catch(e) { return null; }
+}
 
 export const db = {
+
     generarIdUnico() {
         return 'ord_' + Math.random().toString(36).substring(2, 8);
     },
@@ -21,130 +35,116 @@ export const db = {
             total_bs,
             items,
             estado: 'recibido',
-            creado_el: new Date().toISOString()
+            creado_en: new Date().toISOString()
         };
 
-        try {
-            const res = await fetch(`${DB_SERVER}/api/orders`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(nuevoPedido)
-            });
-            if (!res.ok) throw new Error('Error al registrar pedido en servidor');
-            return await res.json();
-        } catch (error) {
-            console.error('db.js: Usando respaldo de LocalStorage debido a error de red:', error);
-            let localOrders = JSON.parse(localStorage.getItem('delivery_orders') || '{}');
-            localOrders[nuevoPedido.id] = nuevoPedido;
-            localStorage.setItem('delivery_orders', JSON.stringify(localOrders));
-            return nuevoPedido;
+        // Always save to localStorage
+        const orders = getLocalOrders();
+        orders[nuevoPedido.id] = nuevoPedido;
+        saveLocalOrders(orders);
+
+        // Also try server if local
+        if (IS_LOCAL && DB_SERVER) {
+            try {
+                await fetch(`${DB_SERVER}/api/orders`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(nuevoPedido)
+                });
+            } catch(e) { /* localStorage is the source of truth */ }
         }
+
+        return nuevoPedido;
     },
 
     async obtenerPedido(id) {
-        try {
-            const res = await fetch(`${DB_SERVER}/api/orders/${id}`);
-            if (!res.ok) throw new Error('Pedido no encontrado');
-            return await res.json();
-        } catch (error) {
-            let localOrders = JSON.parse(localStorage.getItem('delivery_orders') || '{}');
-            return localOrders[id] || { error: 'Not found' };
+        const orders = getLocalOrders();
+        if (orders[id]) return orders[id];
+
+        if (IS_LOCAL && DB_SERVER) {
+            try {
+                const res = await fetch(`${DB_SERVER}/api/orders/${id}`);
+                if (res.ok) return await res.json();
+            } catch(e) {}
         }
+
+        return null;
     },
 
     async obtenerPedidosActivos() {
-        try {
-            const res = await fetch(`${DB_SERVER}/api/orders`);
-            if (!res.ok) throw new Error('Error al obtener pedidos');
-            return await res.json();
-        } catch (error) {
-            let localOrders = JSON.parse(localStorage.getItem('delivery_orders') || '{}');
-            return Object.values(localOrders).filter(o => o.estado !== 'entregado');
-        }
+        const orders = getLocalOrders();
+        return Object.values(orders);
     },
 
     async actualizarEstado(id, nuevoEstado) {
-        try {
-            const res = await fetch(`${DB_SERVER}/api/orders/${id}/status`, {
-                method: 'PUT',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ estado: nuevoEstado })
-            });
-            if (!res.ok) throw new Error('Error al actualizar estado');
-            return await res.json();
-        } catch (error) {
-            let localOrders = JSON.parse(localStorage.getItem('delivery_orders') || '{}');
-            if (localOrders[id]) {
-                localOrders[id].estado = nuevoEstado;
-                localStorage.setItem('delivery_orders', JSON.stringify(localOrders));
-                return localOrders[id];
-            }
-            return { error: 'Not found' };
+        const orders = getLocalOrders();
+        if (orders[id]) {
+            orders[id].estado = nuevoEstado;
+            saveLocalOrders(orders);
         }
+
+        if (IS_LOCAL && DB_SERVER) {
+            try {
+                await fetch(`${DB_SERVER}/api/orders/${id}/status`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ estado: nuevoEstado })
+                });
+            } catch(e) {}
+        }
+
+        return orders[id] || null;
     },
 
     suscribirAPedido(id, callback) {
-        if (window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1' && !window.location.origin.includes('traccionweb.com')) {
-            // Fallback: Long polling local si no hay soporte SSE
-            const interval = setInterval(async () => {
-                const order = await this.obtenerPedido(id);
-                callback(order);
-            }, 3000);
-            return () => clearInterval(interval);
-        }
+        // Initial call
+        const orders = getLocalOrders();
+        if (orders[id]) callback(orders[id]);
 
-        const sseUrl = `${DB_SERVER}/api/stream?id=${id}`;
-        const eventSource = new EventSource(sseUrl);
+        // Poll localStorage every 2 seconds for changes
+        const interval = setInterval(() => {
+            const current = getLocalOrders();
+            if (current[id]) callback(current[id]);
+        }, 2000);
 
-        eventSource.onmessage = (event) => {
-            try {
-                const order = jsonParseSafe(event.data);
-                if (order) callback(order);
-            } catch (e) {
-                console.error('Error parseando SSE data:', e);
+        // Also listen for cross-tab storage events
+        const handler = (e) => {
+            if (e.key === LS_KEY) {
+                const updated = getLocalOrders();
+                if (updated[id]) callback(updated[id]);
             }
         };
-
-        eventSource.onerror = () => {
-            console.warn('SSE disconnected. Reconnecting...');
-        };
+        window.addEventListener('storage', handler);
 
         return () => {
-            eventSource.close();
+            clearInterval(interval);
+            window.removeEventListener('storage', handler);
         };
     },
 
     suscribirATodosLosPedidos(callback) {
-        if (window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1' && !window.location.origin.includes('traccionweb.com')) {
-            const interval = setInterval(async () => {
-                const orders = await this.obtenerPedidosActivos();
-                callback(orders);
-            }, 3000);
-            return () => clearInterval(interval);
-        }
+        // Initial call
+        const orders = getLocalOrders();
+        callback(Object.values(orders));
 
-        const sseUrl = `${DB_SERVER}/api/stream-all`;
-        const eventSource = new EventSource(sseUrl);
+        // Poll localStorage every 2 seconds
+        const interval = setInterval(() => {
+            const current = getLocalOrders();
+            callback(Object.values(current));
+        }, 2000);
 
-        eventSource.onmessage = (event) => {
-            try {
-                const orders = jsonParseSafe(event.data);
-                if (orders) callback(orders);
-            } catch (e) {
-                console.error('Error parseando SSE data:', e);
+        // Cross-tab sync
+        const handler = (e) => {
+            if (e.key === LS_KEY) {
+                const updated = getLocalOrders();
+                callback(Object.values(updated));
             }
         };
+        window.addEventListener('storage', handler);
 
         return () => {
-            eventSource.close();
+            clearInterval(interval);
+            window.removeEventListener('storage', handler);
         };
     }
 };
-
-function jsonParseSafe(str) {
-    try {
-        return JSON.parse(str);
-    } catch (e) {
-        return null;
-    }
-}
