@@ -353,15 +353,17 @@
     .search-bar svg { position: absolute; left: 12px; top: 12px; width: 16px; height: 16px; color: var(--c-text-2); }
     .search-bar input { padding-left: 36px; margin-bottom: 0; background: var(--c-surface); }
 
-    .chip-scroll { display: flex; gap: 8px; overflow-x: auto; padding-bottom: 16px; margin-bottom: 8px; scrollbar-width: none; }
+    .chip-scroll { display: flex; gap: 10px; overflow-x: auto; padding-bottom: 16px; margin-bottom: 8px; scrollbar-width: none; scroll-snap-type: x proximity; }
     .chip-scroll::-webkit-scrollbar { display: none; }
     .chip {
       display: flex;
       align-items: center;
       justify-content: center;
-      min-height: 38px;
+      gap: 7px;
+      flex: none;
+      min-height: 42px;
       padding: 6px 18px;
-      border-radius: 20px;
+      border-radius: 22px;
       background: var(--c-surface);
       border: 1px solid var(--c-border);
       font-size: 13px;
@@ -373,8 +375,16 @@
       user-select: none;
       -webkit-user-select: none;
       cursor: pointer;
+      scroll-snap-align: center;
     }
-    .chip.active { background: var(--c-gold-dim); border-color: var(--c-gold); color: var(--c-gold); }
+    .chip svg { width: 17px; height: 17px; flex: none; }
+    .chip.active {
+      background: var(--c-gold);
+      border-color: var(--c-gold);
+      color: var(--c-bg);
+      box-shadow: 0 4px 14px rgba(201, 168, 76, 0.35);
+    }
+    .chip.active svg { stroke-width: 2; }
 
     .dish-card {
       display: flex;
@@ -1013,6 +1023,17 @@
 
   const CATEGORIES = ['Todo', 'Entradas', 'Pastas', 'Carnes', 'Pizzas', 'Postres', 'Bebidas', 'Infantil'];
 
+  const CATEGORY_ICONS = {
+    'Todo':      '<rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/>',
+    'Entradas':  '<path d="M4 11h16a8 8 0 0 1-16 0z"/><line x1="12" y1="3" x2="12" y2="7"/>',
+    'Pastas':    '<path d="M5 3v6M9 3v6M13 3v6"/><path d="M7 9v9a2 2 0 0 0 4 0V9"/>',
+    'Carnes':    '<path d="M17 4c-3.5 0-6 2.5-6 5.5 0 1.7.9 3 2.5 4.2 2 1.5 4.5 1.8 6 .6 2-1.6 1.6-10.3-2.5-10.3z"/><line x1="9" y1="11" x2="6" y2="14"/>',
+    'Pizzas':    '<path d="M12 4l8 16-8-2-8 2z"/><line x1="12" y1="18" x2="12" y2="4"/>',
+    'Postres':   '<path d="M6 14h12v6H6z"/><path d="M6 14c0-3 1.2-5.2 3-6.2 1 1 2 1 3 0 1 1 2 1 3 0 1.8 1 3 3.2 3 6.2"/><circle cx="12" cy="5" r="2"/>',
+    'Bebidas':   '<path d="M7 3h10l-.7 12.2a2 2 0 0 1-2 1.8h-4.6a2 2 0 0 1-2-1.8z"/><line x1="7" y1="9" x2="17" y2="9"/><path d="M14 3l.8 4"/>',
+    'Infantil':  '<circle cx="12" cy="12" r="9"/><path d="M8.5 14.5s1.3 2 3.5 2 3.5-2 3.5-2"/><circle cx="9" cy="10" r="1"/><circle cx="15" cy="10" r="1"/>'
+  };
+
   let state = {
     cart: [],
     tasa: parseFloat(localStorage.getItem('tasa')) || 45.00,
@@ -1180,7 +1201,10 @@
   function renderCategories() {
     const cont = $('category-chips');
     cont.innerHTML = CATEGORIES.map(cat => 
-      `<div class="chip ${state.activeCategory === cat ? 'active' : ''}" onclick="setCategory('${cat}')">${cat}</div>`
+      `<div class="chip ${state.activeCategory === cat ? 'active' : ''}" onclick="setCategory('${cat}')">
+        <svg viewBox="0 0 24 24">${CATEGORY_ICONS[cat]}</svg>
+        <span>${cat}</span>
+      </div>`
     ).join('');
   }
 
