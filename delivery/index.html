@@ -474,17 +474,35 @@
     .sheet-close:active { transform: scale(0.9); color: var(--c-gold); }
     .sheet-content { padding: 0 20px 20px; overflow-y: auto; }
     
-    .sheet-img { width: 100%; height: 200px; object-fit: cover; border-radius: 12px; margin-bottom: 16px; }
+    .sheet-img { width: 100%; height: 168px; object-fit: cover; border-radius: 12px; margin-bottom: 14px; }
     .sheet-title { font-size: 24px; font-family: var(--font-serif); font-weight: 700; margin-bottom: 8px; }
-    .sheet-desc { font-size: 14px; color: var(--c-text-2); line-height: 1.5; margin-bottom: 20px; }
-    .sheet-price-row { display: flex; align-items: flex-end; margin-bottom: 24px; }
+    .sheet-desc { font-size: 14px; color: var(--c-text-2); line-height: 1.5; margin-bottom: 16px; }
+    .sheet-price-row { display: flex; align-items: flex-end; margin-bottom: 20px; }
     .sheet-price-usd { font-size: 24px; font-weight: 600; color: var(--c-gold); }
     .sheet-price-bs { font-size: 14px; color: var(--c-text-2); margin-left: 12px; margin-bottom: 4px; }
 
     /* INGREDIENTS & PAIRING */
     .sheet-ingred { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 20px; }
     .ingred-chip { background: var(--c-gold-dim); border: 1px solid rgba(201,168,76,0.35); color: var(--c-gold); font-size: 12px; padding: 5px 12px; border-radius: 16px; }
-    .pair-box { margin-top: 12px; background: var(--c-surface-2); border: 1px solid var(--c-border-h); border-left: 3px solid var(--c-gold); border-radius: 8px; padding: 14px; font-size: 14px; color: var(--c-text-2); line-height: 1.5; }
+    .pair-box { margin-top: 12px; background: var(--c-surface-2); border: 1px solid var(--c-border-h); border-left: 3px solid var(--c-gold); border-radius: 8px; padding: 12px; font-size: 13.5px; color: var(--c-text-2); line-height: 1.45; }
+    .pair-add-btn {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      width: 100%;
+      margin-top: 10px;
+      padding: 10px 16px;
+      min-height: 42px;
+      border-radius: 8px;
+      background: var(--c-gold);
+      color: var(--c-bg);
+      font-size: 14px;
+      font-weight: 600;
+      transition: transform 0.12s ease, background-color 0.2s ease, opacity 0.2s ease;
+    }
+    .pair-add-btn:active { transform: scale(0.97); }
+    .pair-add-btn.added { background: var(--c-emerald); }
 
     /* CART VIEW */
     .cart-item { display: flex; align-items: center; padding: 12px 0; border-bottom: 1px solid var(--c-border); }
@@ -946,71 +964,71 @@
     {id:1, name:'Carpaccio De Lomito', price:18, cat:'entradas', img:'./img/carpaccio_lomito.webp',
      desc:'Finas láminas de lomito marinadas con limón, aceite de oliva extra virgen y parmesano.',
      ingred:['Lomito', 'Parmesano', 'Rúcula', 'Alcaparras', 'Limón'],
-     acomp:'Ligero y fresco: combínalo con la Fosforera Rogasa para abrir con sabor a mar.'},
+     acomp:'Ligero y fresco: combínalo con la Fosforera Rogasa para abrir con sabor a mar.', acompId:5},
     {id:2, name:'Carpaccio De Pulpo', price:22, cat:'entradas', img:'./img/carpaccio_pulpo.webp',
      desc:'Pulpo tierno en láminas con aceite de oliva, paprika ahumada y toques cítricos.',
      ingred:['Pulpo', 'Aceite de Oliva', 'Paprika', 'Limón', 'Perejil'],
-     acomp:'Un blanco seco o el Jugo de Fresa Natural equilibran su sabor intenso.'},
+     acomp:'Un blanco seco o el Jugo de Fresa Natural equilibran su sabor intenso.', acompId:19},
     {id:3, name:'Tequeños Hechos En Casa', price:10, cat:'entradas', img:'./img/tequenos_caseros.webp',
      desc:'Masa casera rellena de queso semi-curado, fritos al momento.',
      ingred:['Queso semi-curado', 'Masa casera', 'Guasacaca'],
-     acomp:'Ideales para compartir con la Ensalada Capresa Rogasa como entrada completa.'},
+     acomp:'Ideales para compartir con la Ensalada Capresa Rogasa como entrada completa.', acompId:4},
     {id:4, name:'Ensalada Capresa Rogasa', price:14, cat:'entradas', img:'./img/ensalada_capresa.webp',
      desc:'Tomate, mozzarella fresca y albahaca con reducción balsámica.',
      ingred:['Tomate', 'Mozzarella fresca', 'Albahaca', 'Balsámico'],
-     acomp:'Refrescante: acompáñala con el Panuzzo Pollo Crispy para una cena ligera.'},
+     acomp:'Refrescante: acompáñala con el Panuzzo Pollo Crispy para una cena ligera.', acompId:16},
     {id:5, name:'Fosforera Rogasa', price:16, cat:'entradas', img:'./img/fosforera_rogasa.webp',
      desc:'Crema de mariscos con toques de ajo, perejil y mariscos frescos.',
      ingred:['Mariscos', 'Crema', 'Ajo', 'Perejil', 'Cebollín'],
-     acomp:'Sigue con el Risotto Negro para una experiencia de mar completa.'},
+     acomp:'Sigue con el Risotto Negro para una experiencia de mar completa.', acompId:9},
     {id:6, name:'Spaghetti Carbonara', price:24, cat:'pastas', img:'./img/carbonara.webp',
      desc:'Pasta al dente con salsa de yema, panceta crujiente y parmesano.',
      ingred:['Panceta', 'Yema de huevo', 'Parmesano', 'Pimienta negra'],
-     acomp:'La Torta Rústica de Chocolate es el cierre dulce perfecto.'},
+     acomp:'La Torta Rústica de Chocolate es el cierre dulce perfecto.', acompId:18},
     {id:7, name:'Lasaña De La Abuela', price:22, cat:'pastas', img:'./img/lasana.webp',
      desc:'Capas de pasta con ragú de carne, bechamel y gratinado de queso.',
      ingred:['Ragú de carne', 'Bechamel', 'Parmesano', 'Albahaca'],
-     acomp:'Acompáñala con una Ensalada Capresa Rogasa para balancear.'},
+     acomp:'Acompáñala con una Ensalada Capresa Rogasa para balancear.', acompId:4},
     {id:8, name:'Cartoccio De Lomito', price:26, cat:'pastas', img:'./img/lomito_florencia.webp',
      desc:'Pasta envuelta en papel de horno con lomito, tomate y hierbas aromáticas.',
      ingred:['Lomito', 'Tomate', 'Hierbas aromáticas', 'Parmesano'],
-     acomp:'Si vienes con antojo de pasta, el Spaghetti Carbonara es la pareja ideal.'},
+     acomp:'Si vienes con antojo de pasta, el Spaghetti Carbonara es la pareja ideal.', acompId:6},
     {id:9, name:'Risotto Negro', price:28, cat:'pastas', img:'./img/risotto_negro.webp',
      desc:'Arroz cremoso con tinta de calamar, mariscos y un toque de limón.',
      ingred:['Tinta de calamar', 'Mariscos', 'Arroz', 'Limón'],
-     acomp:'La Fosforera Rogasa abre el apetito perfecto para este plato.'},
+     acomp:'La Fosforera Rogasa abre el apetito perfecto para este plato.', acompId:5},
     {id:10, name:'Lomito Florencia', price:36, cat:'carnes', img:'./img/lomito_florencia.webp',
      desc:'Corte de lomito a la parrilla con salsa de champiñones y gratinado de queso.',
      ingred:['Lomito', 'Champiñones', 'Queso gratinado', 'Papas'],
-     acomp:'Un vino tinto o el Risotto Negro lo convierten en una velada completa.'},
+     acomp:'Un vino tinto o el Risotto Negro lo convierten en una velada completa.', acompId:9},
     {id:11, name:'Hamburguesa Angus', price:20, cat:'carnes', img:'./img/hamburguesa.webp',
      desc:'Carne angus jugosa con queso cheddar, tocineta y papas fritas.',
      ingred:['Angus', 'Cheddar', 'Tocineta', 'Papas fritas'],
-     acomp:'Acompáñala con Tequeños Hechos En Casa para compartir.'},
+     acomp:'Acompáñala con Tequeños Hechos En Casa para compartir.', acompId:3},
     {id:12, name:'Langostinos Tempura', price:28, cat:'carnes', img:'./img/langostinos_tempura.webp',
      desc:'Langostinos crujientes en tempura con salsa agridulce.',
      ingred:['Langostinos', 'Tempura', 'Salsa agridulce', 'Sésamo'],
-     acomp:'El Jugo de Fresa Natural refresca perfectamente este plato.'},
+     acomp:'El Jugo de Fresa Natural refresca perfectamente este plato.', acompId:19},
     {id:13, name:'Pulpo Al Grill', price:30, cat:'carnes', img:'./img/pulpo_grill.webp',
      desc:'Pulpo a la parrilla con papas, pimentón y alioli ahumado.',
      ingred:['Pulpo', 'Papas', 'Pimentón', 'Alioli ahumado'],
-     acomp:'Combínalo con la Ensalada Capresa para una cena mediterránea.'},
+     acomp:'Combínalo con la Ensalada Capresa para una cena mediterránea.', acompId:4},
     {id:14, name:'Tartufo De Mortadela (Pizza)', price:22, cat:'pizzas', img:'./img/pizzas_tartufo.webp',
      desc:'Pizza con crema de trufa, mortadela y mozzarella fundida.',
      ingred:['Trufa', 'Mortadela', 'Mozzarella', 'Masa artesanal'],
-     acomp:'Una Focaccia Rústica Martina con aceite de oliva la hace aún mejor.'},
+     acomp:'Una Focaccia Rústica Martina con aceite de oliva la hace aún mejor.', acompId:15},
     {id:15, name:'Focaccia Rústica Martina', price:16, cat:'pizzas', img:'./img/pizzas_tartufo.webp',
      desc:'Focaccia artesanal con romero, sal marina y aceite de oliva.',
      ingred:['Romero', 'Aceite de oliva', 'Sal marina', 'Masa madre'],
-     acomp:'Perfecta con la Pizza Tartufo de Mortadela para compartir.'},
+     acomp:'Perfecta con la Pizza Tartufo de Mortadela para compartir.', acompId:14},
     {id:16, name:'Panuzzo Pollo Crispy', price:18, cat:'pizzas', img:'./img/hamburguesa.webp',
      desc:'Pan crujiente relleno de pollo empanizado, lechuga y aderezo cremoso.',
      ingred:['Pollo crispy', 'Lechuga', 'Aderezo cremoso', 'Pan artesanal'],
-     acomp:'Con unos Tequeños Hechos En Casa es la combinación ganadora.'},
+     acomp:'Con unos Tequeños Hechos En Casa es la combinación ganadora.', acompId:3},
     {id:17, name:'Macarrón Con Queso', price:12, cat:'infantil', img:'./img/carbonara.webp',
      desc:'Macarrones cremosos con mezcla de quesos gratinados. El favorito de los pequeños.',
      ingred:['Queso cheddar', 'Queso crema', 'Macarrones'],
-     acomp:'La Torta Rústica de Chocolate hará felices a los niños.'},
+     acomp:'La Torta Rústica de Chocolate hará felices a los niños.', acompId:18},
     {id:18, name:'Torta Rústica de Chocolate', price:10, cat:'postres', img:'./img/torta_chocolate.webp',
      desc:'Torta húmeda de chocolate con corazón fundido y un toque de sal marina.',
      ingred:['Chocolate 70%', 'Sal marina', 'Mantequilla', 'Huevo'],
@@ -1061,6 +1079,7 @@
   window.openWhatsAppReserva = openWhatsAppReserva;
   window.sendReservaWhatsApp = sendReservaWhatsApp;
   window.toggleRecomendacion = toggleRecomendacion;
+  window.addRecommendedToCart = addRecommendedToCart;
   window.setCategory = setCategory;
   window.renderMenu = renderMenu;
   window.onSearchInput = onSearchInput;
@@ -1287,7 +1306,17 @@
     document.getElementById('sd-ingred').innerHTML = (d.ingred || []).map(i => `<span class="ingred-chip">${i}</span>`).join('');
 
     const pairBox = document.getElementById('sd-pair');
-    pairBox.textContent = d.acomp || '';
+    state.selectedRecomId = d.acompId || null;
+    const rec = d.acompId ? getDish(d.acompId) : null;
+    const recSold = rec ? isSoldOut(d.acompId) : false;
+    pairBox.innerHTML = d.acomp
+      ? `<div class="pair-text">${d.acomp}</div>` + (rec && !recSold
+          ? `<button class="pair-add-btn" id="sd-pair-add" onclick="addRecommendedToCart()">
+              <svg viewBox="0 0 24 24" style="width:16px;height:16px"><path d="M12 5v14M5 12h14"/></svg>
+              Agregar ${rec.name} al Carrito · +$${rec.price}
+            </button>`
+          : '')
+      : '';
     pairBox.style.display = 'none';
     document.getElementById('sd-pair-btn').textContent = 'Recomendar acompañamiento';
     document.getElementById('sd-pair-btn').style.display = d.acomp ? '' : 'none';
@@ -1427,6 +1456,27 @@
   function addToCartFromSheet() {
     addToCart(state.selectedDishId);
     closeSheets();
+  }
+
+  // Agregar el acompañamiento recomendado directamente al carrito
+  function addRecommendedToCart() {
+    const recId = state.selectedRecomId;
+    if(!recId || isSoldOut(recId)) return;
+    const rec = getDish(recId);
+    addToCart(recId);
+    showToast(`${rec.name} agregada al carrito`, 'success');
+    const btn = document.getElementById('sd-pair-add');
+    if(btn) {
+      const label = btn.innerHTML;
+      btn.classList.add('added');
+      btn.disabled = true;
+      btn.innerHTML = '<svg viewBox="0 0 24 24" style="width:16px;height:16px"><path d="M20 6L9 17l-5-5"/></svg> Agregada al carrito';
+      setTimeout(() => {
+        btn.classList.remove('added');
+        btn.disabled = false;
+        btn.innerHTML = label;
+      }, 1800);
+    }
   }
 
   function updateCartBadge() {
