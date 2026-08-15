@@ -585,8 +585,40 @@
     .field-error { border-color: var(--c-rose) !important; }
     .field-error:focus { border-color: var(--c-rose) !important; }
 
+    /* PRESS & RIPPLE: feedback táctil profesional en cada pulsación */
+    button, .nav-item, .chip, .dish-card, .fav-card, .pay-method {
+      position: relative;
+      overflow: hidden;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .ripple {
+      position: absolute;
+      border-radius: 50%;
+      pointer-events: none;
+      z-index: 5;
+      background: radial-gradient(circle, rgba(255, 255, 255, 0.35) 0%, rgba(255, 255, 255, 0.1) 70%);
+      transform: scale(0);
+      animation: rippleRun 0.55s cubic-bezier(0.2, 0.6, 0.35, 1) forwards;
+    }
+    @keyframes rippleRun { to { transform: scale(1); opacity: 0; } }
+
+    .btn-primary, .btn-outline, .chip, .dish-card, .fav-card, .pay-method, .carousel-container {
+      transition: transform 0.12s ease, color 0.2s ease, background-color 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease, opacity 0.2s ease;
+    }
+    .btn-primary:active, .btn-outline:active, .chip:active, .dish-card:active, .fav-card:active, .pay-method:active, .carousel-container:active { transform: scale(0.97); }
+
+    @media (hover: hover) {
+      .btn-primary:hover { filter: brightness(1.08); box-shadow: 0 6px 18px rgba(201, 168, 76, 0.35); }
+      .btn-outline:hover { border-color: var(--c-gold); color: var(--c-gold); background: var(--c-gold-dim); }
+      .chip:hover { border-color: var(--c-border-h); color: var(--c-text); }
+      .dish-card:hover, .fav-card:hover { border-color: var(--c-border-h); transform: translateY(-2px); box-shadow: 0 8px 20px rgba(0, 0, 0, 0.35); }
+      .pay-method:hover { border-color: var(--c-border-h); }
+      .nav-item:hover { color: var(--c-text); }
+      .carousel-container:hover { box-shadow: 0 4px 24px rgba(0, 0, 0, 0.3); }
+    }
+
     @media (prefers-reduced-motion: reduce) {
-      .view, .carousel-track, .dot, .bottom-sheet, .sheet-overlay, .step-icon, .step-line-progress, .fab-cart, .toast { animation: none !important; transition: none !important; }
+      .view, .carousel-track, .dot, .bottom-sheet, .sheet-overlay, .step-icon, .step-line-progress, .fab-cart, .toast, .ripple { animation: none !important; transition: none !important; }
     }
 
   </style>
@@ -1073,6 +1105,25 @@
     });
     if(empty.length) document.getElementById(empty[0]).focus();
   }
+
+  // RIPPLE: onda táctil en cada pulsación (feedback profesional)
+  const RIPPLE_TARGETS = 'button, .nav-item, .chip, .dish-card, .fav-card, .pay-method, .carousel-container';
+  document.addEventListener('pointerdown', (e) => {
+    if (e.pointerType === 'mouse' && e.button !== 0) return;
+    if (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+    const host = e.target.closest(RIPPLE_TARGETS);
+    if (!host || host.disabled) return;
+    if (host.querySelector('.agotado-overlay')) return; // platos agotados: sin acción, sin onda
+    const rect = host.getBoundingClientRect();
+    const d = Math.max(rect.width, rect.height) * 1.2;
+    const r = document.createElement('span');
+    r.className = 'ripple';
+    r.style.width = r.style.height = d + 'px';
+    r.style.left = (e.clientX - rect.left - d / 2) + 'px';
+    r.style.top = (e.clientY - rect.top - d / 2) + 'px';
+    host.appendChild(r);
+    r.addEventListener('animationend', () => r.remove(), { once: true });
+  });
 
   // UTILS
   let searchTimer = null;
