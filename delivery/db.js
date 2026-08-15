@@ -1,22 +1,21 @@
-// db.js - Sistema de Datos para App de Domicilios Rogasa Café
-// Funciona con localStorage en produccion y con servidor local (SSE) en desarrollo
+// db.js — Firebase Realtime Database para Rogasa Café Delivery
+// Sincronización en tiempo real entre clientes y cocina
 
-const IS_LOCAL = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
-const DB_SERVER = IS_LOCAL ? `http://localhost:8085` : null;
-const LS_KEY = 'rogasa_delivery_orders';
+import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
+import { getDatabase, ref, set, get, child, onValue, update } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js';
 
-function getLocalOrders() {
-    try { return JSON.parse(localStorage.getItem(LS_KEY) || '{}'); }
-    catch(e) { return {}; }
-}
+const firebaseConfig = {
+    apiKey: "AIzaSyDViZSKtfnEVnDL1GEF4iOl9kUp043Y3mw",
+    authDomain: "rogasa-delivery.firebaseapp.com",
+    databaseURL: "https://rogasa-delivery-default-rtdb.firebaseio.com",
+    projectId: "rogasa-delivery",
+    storageBucket: "rogasa-delivery.firebasestorage.app",
+    messagingSenderId: "67005464439",
+    appId: "1:67005464439:web:7ce4db453342c3f4e6ab72"
+};
 
-function saveLocalOrders(orders) {
-    localStorage.setItem(LS_KEY, JSON.stringify(orders));
-}
-
-function jsonParseSafe(str) {
-    try { return JSON.parse(str); } catch(e) { return null; }
-}
+const app = initializeApp(firebaseConfig);
+const database = getDatabase(app);
 
 export const db = {
 
@@ -38,113 +37,63 @@ export const db = {
             creado_en: new Date().toISOString()
         };
 
-        // Always save to localStorage
-        const orders = getLocalOrders();
-        orders[nuevoPedido.id] = nuevoPedido;
-        saveLocalOrders(orders);
-
-        // Also try server if local
-        if (IS_LOCAL && DB_SERVER) {
-            try {
-                await fetch(`${DB_SERVER}/api/orders`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(nuevoPedido)
-                });
-            } catch(e) { /* localStorage is the source of truth */ }
+        try {
+            await set(ref(database, 'orders/' + nuevoPedido.id), nuevoPedido);
+        } catch (e) {
+            console.error('Firebase write error:', e);
         }
 
         return nuevoPedido;
     },
 
     async obtenerPedido(id) {
-        const orders = getLocalOrders();
-        if (orders[id]) return orders[id];
-
-        if (IS_LOCAL && DB_SERVER) {
-            try {
-                const res = await fetch(`${DB_SERVER}/api/orders/${id}`);
-                if (res.ok) return await res.json();
-            } catch(e) {}
+        try {
+            const snapshot = await get(child(ref(database), 'orders/' + id));
+            if (snapshot.exists()) return snapshot.val();
+        } catch (e) {
+            console.error('Firebase read error:', e);
         }
-
         return null;
     },
 
     async obtenerPedidosActivos() {
-        const orders = getLocalOrders();
-        return Object.values(orders);
+        try {
+            const snapshot = await get(ref(database, 'orders'));
+            if (snapshot.exists()) return Object.values(snapshot.val());
+        } catch (e) {
+            console.error('Firebase read error:', e);
+        }
+        return [];
     },
 
     async actualizarEstado(id, nuevoEstado) {
-        const orders = getLocalOrders();
-        if (orders[id]) {
-            orders[id].estado = nuevoEstado;
-            saveLocalOrders(orders);
+        try {
+            await update(ref(database, 'orders/' + id), { estado: nuevoEstado });
+            const snapshot = await get(ref(database, 'orders/' + id));
+            return snapshot.exists() ? snapshot.val() : null;
+        } catch (e) {
+            console.error('Firebase update error:', e);
+            return null;
         }
-
-        if (IS_LOCAL && DB_SERVER) {
-            try {
-                await fetch(`${DB_SERVER}/api/orders/${id}/status`, {
-                    method: 'PUT',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ estado: nuevoEstado })
-                });
-            } catch(e) {}
-        }
-
-        return orders[id] || null;
     },
 
     suscribirAPedido(id, callback) {
-        // Initial call
-        const orders = getLocalOrders();
-        if (orders[id]) callback(orders[id]);
-
-        // Poll localStorage every 2 seconds for changes
-        const interval = setInterval(() => {
-            const current = getLocalOrders();
-            if (current[id]) callback(current[id]);
-        }, 2000);
-
-        // Also listen for cross-tab storage events
-        const handler = (e) => {
-            if (e.key === LS_KEY) {
-                const updated = getLocalOrders();
-                if (updated[id]) callback(updated[id]);
+        const orderRef = ref(database, 'orders/' + id);
+        return onValue(orderRef, (snapshot) => {
+            if (snapshot.exists()) {
+                callback(snapshot.val());
             }
-        };
-        window.addEventListener('storage', handler);
-
-        return () => {
-            clearInterval(interval);
-            window.removeEventListener('storage', handler);
-        };
+        });
     },
 
     suscribirATodosLosPedidos(callback) {
-        // Initial call
-        const orders = getLocalOrders();
-        callback(Object.values(orders));
-
-        // Poll localStorage every 2 seconds
-        const interval = setInterval(() => {
-            const current = getLocalOrders();
-            callback(Object.values(current));
-        }, 2000);
-
-        // Cross-tab sync
-        const handler = (e) => {
-            if (e.key === LS_KEY) {
-                const updated = getLocalOrders();
-                callback(Object.values(updated));
+        const ordersRef = ref(database, 'orders');
+        return onValue(ordersRef, (snapshot) => {
+            if (snapshot.exists()) {
+                callback(Object.values(snapshot.val()));
+            } else {
+                callback([]);
             }
-        };
-        window.addEventListener('storage', handler);
-
-        return () => {
-            clearInterval(interval);
-            window.removeEventListener('storage', handler);
-        };
+        });
     }
 };
