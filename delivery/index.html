@@ -356,13 +356,23 @@
     .chip-scroll { display: flex; gap: 8px; overflow-x: auto; padding-bottom: 16px; margin-bottom: 8px; scrollbar-width: none; }
     .chip-scroll::-webkit-scrollbar { display: none; }
     .chip {
-      padding: 6px 16px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 38px;
+      padding: 6px 18px;
       border-radius: 20px;
       background: var(--c-surface);
       border: 1px solid var(--c-border);
       font-size: 13px;
+      font-weight: 500;
+      line-height: 1;
       color: var(--c-text-2);
       white-space: nowrap;
+      text-align: center;
+      user-select: none;
+      -webkit-user-select: none;
+      cursor: pointer;
     }
     .chip.active { background: var(--c-gold-dim); border-color: var(--c-gold); color: var(--c-gold); }
 
