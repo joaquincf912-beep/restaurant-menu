@@ -1255,6 +1255,7 @@
     dismissedOrders: JSON.parse(localStorage.getItem('dismissed_orders') || '[]'),
     trackingId: localStorage.getItem('last_delivery_tracking_id') || null,
     trackingSubId: null,
+    adminOrders: [],
     adminSubscribed: false,
     reservaType: null,
     unsubscribeTracking: null,
@@ -1323,6 +1324,125 @@
     }
   }
 
+  // === PUSH DESDE COCINA (sin servidores) ===
+  // Cuando el restaurante cambia el estado de un pedido, el navegador del panel
+  // de Cocina firma un JWT con la cuenta de servicio y envía el push FCM al
+  // instante — sin Cloud Functions, sin costo, y llega aunque la app del
+  // cliente esté cerrada (el service worker la muestra).
+  //
+  // ⚠️ La key de la cuenta de servicio vive aquí porque es lo que permite
+  // firmar desde el navegador. Si algún día se rota en Google Cloud, hay que
+  // actualizar PUSH_SA en este archivo y volver a desplegar.
+  const PUSH_SA = {
+    client_email: 'firebase-adminsdk-fbsvc@rogasa-delivery.iam.gserviceaccount.com',
+    token_uri: 'https://oauth2.googleapis.com/token',
+    private_key: `-----BEGIN PRIVATE KEY-----
+MIIEvQIBADANBgkqhkiG9w0BAQEFAASCBKcwggSjAgEAAoIBAQDkp1PYRlIcfjUX
+M9lUCX1F57YFJJi4C8ebx9NCXO9MrBUkiiY6LJKZ0gYseCzkUCeuMVhs5uQ1YWVk
+nboDdMx7BhJy3Mh4I5GaKRwi8d9hav1eYWjoG6YPfX8ZyoVNtyIL9FhS/0vZKtk4
+VLaSRdYOr7M0bgyfQAeBAX4mXjYiiiUWDuMtdjQP25E6ePj+TgzjmSJTkOlxMuga
+lgz0LjQto2wbeVbH9N+/v6exNHJ+ghiajhfL0HIYuxFbfy4cUK+qAyly3caSnqQ2
+L5hblfQ35YSW/UendkJjmvwd8zt1M4dEUWG2zQA9A9pkd6sRfnfAVaqNUmPg3vKp
+TbWolevNAgMBAAECggEAX3epnzxFHlZnjkd8rwTDREOpkN4l0XpBnj5Ba4zn8QhM
+T5RKv7FKiGTTZQ/MFouM9cLum5GPqOYAcpEUUEsc8SSo4UJjhR28tjQB5mk8ji0g
+mp5rMbYRkJgiUD9phvg2g+1CT2z+Wy7zwPxFui7kX/9mADcOmBMgzvEznYtqaOKg
+nlcsdLOWnEsWiL121p4G4KfUnUHhKHCb7PrVjzCEs4iiCXYT6kOTBNV9Yo85XEGA
+nGxP8sR+GDS6S4wqQaNW18CnNpzkYOXV/nUxob2CJSuOPDRn/7vehzf5xJ/xs41x
+BJItg8OpWJ1i4OEL9qzUb7M/nsPg7zE819KziJwc9QKBgQD/0z0RqS4QZuAGc4Lt
+R/TvsGXlIFT7u6UPS+hzYxzYKnbF3SAUOSMxxQ4VAhtVFI7Vqb5l0dT+4jPIDPSP
+X2TPoEsftK/1ryLyRSmYwz7WPinTLz5GJxEFwD0hvZvgo8aEytC8OVYOz7fhJCI9
+cMo38McvKSDMkbKeY32Z9Z31GwKBgQDkz1W1JsMGA1L0OhVAPmjHvRi2j7qxw6Vd
+HDE9Jp4xGOn3SoT0+ivPTOqHR2c3jv2g/B+BVeEPFO8OGfLkI/DWqaZiWSVSMhjc
+zBXbAWwVk7155Ao5Scv88ZghOxSGIVwNQvnGHSyS1pab2dLyHc0UB85U5uNe8MXF
+jQrIp635NwKBgQDNGk/I3AmpbsFHis66bEls7dETvTNFS/EO7X3lHN5gVNM62YlB
+jXmxClq67yB4uu21UczrlyqcW0DGr9RXKlUJvWrddaDpacurz1WFO2wiml4wCZ10
+4xdbs/+PEJRrqwKbLnvhnFppr5Gt+KlW9xm5ddpL7j50pI8/O2bUy74jZwKBgAeh
+ytASDOtEbR3sWg0ch84xxoNAZA/N4NQsPpA1m40zsYooGCs7tP5jKGd+wDigMmGO
+R1a/EJS6NAcaYnmtoTjny774DkChnyauQARgFcTaerV4H8ctaPp07IgfOl4G+tUO
+aNps2rHDKp7kMx8UU2TZpc47LVZbXZ1rSPLMdQcdAoGAMnjjj2MCOtBZEHGrkGj+
+oRY0xyKtqNDa0b6nvF9W5kvhErtV+48K9Qgdq7aERyCTBCBnA6SPkMV3NnEReSDd
+pCADw4FUfBnWhpLB3Kjvh7KT3MVfVqjs5J6Gazwy0u1Rm1OTSf+FGAr5hw6WvhrU
+6BaDXT3iYirmVVkzYrf7TjE=
+-----END PRIVATE KEY-----
+`
+  };
+
+  const PUSH_TITLES = {
+    recibido: 'Pedido recibido',
+    cocina: 'En cocina',
+    reparto: 'En camino',
+    entregado: 'Entregado'
+  };
+
+  function b64url(buf) {
+    let s = '';
+    new Uint8Array(buf).forEach(b => s += String.fromCharCode(b));
+    return btoa(s).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+  }
+
+  // Firma un JWT con la cuenta de servicio (WebCrypto) y obtiene un access token.
+  async function mintCocinaToken() {
+    const pem = PUSH_SA.private_key.replace(/-----[^-]+-----/g, '').replace(/\s+/g, '');
+    const der = Uint8Array.from(atob(pem), c => c.charCodeAt(0));
+    const key = await crypto.subtle.importKey('pkcs8', der, { name: 'RSASSA-PKCS1-v1_5', hash: 'SHA-256' }, false, ['sign']);
+    const now = Math.floor(Date.now() / 1000);
+    const enc = (o) => b64url(new TextEncoder().encode(JSON.stringify(o)));
+    const input = enc({ alg: 'RS256', typ: 'JWT' }) + '.' + enc({
+      iss: PUSH_SA.client_email,
+      scope: 'https://www.googleapis.com/auth/cloud-platform',
+      aud: PUSH_SA.token_uri,
+      iat: now,
+      exp: now + 300
+    });
+    const sig = await crypto.subtle.sign('RSASSA-PKCS1-v1_5', key, new TextEncoder().encode(input));
+    const jwt = input + '.' + b64url(sig);
+    const res = await fetch(PUSH_SA.token_uri, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: 'grant_type=urn%3Aietf%3Aparams%3Aoauth%3Agrant-type%3Ajwt-bearer&assertion=' + encodeURIComponent(jwt)
+    });
+    const data = await res.json();
+    if (!data.access_token) throw new Error('OAuth2: ' + JSON.stringify(data).slice(0, 200));
+    return data.access_token;
+  }
+
+  // Envía el push al cliente cuando el panel de Cocina cambia el estado.
+  async function enviarPushCocina(orden) {
+    try {
+      if (!orden || !orden.token || !orden.estado) return;
+      if (orden.notified_estado === orden.estado) return; // ya notificado
+      const accessToken = await mintCocinaToken();
+      const payload = {
+        message: {
+          token: orden.token,
+          notification: {
+            title: PUSH_TITLES[orden.estado] || 'Tu pedido avanza',
+            body: STATUS_LABELS[orden.estado] || 'Tu pedido ha cambiado de estado.'
+          },
+          data: {
+            orderId: orden.id,
+            estado: orden.estado,
+            url: trackUrlFor(orden.id)
+          }
+        }
+      };
+      const res = await fetch('https://fcm.googleapis.com/v1/projects/rogasa-delivery/messages:send', {
+        method: 'POST',
+        headers: { 'Authorization': 'Bearer ' + accessToken, 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+      if (res.ok) {
+        await db.marcarNotificado(orden.id, orden.estado);
+        console.log('📲 Push enviado:', orden.id, '→', orden.estado);
+      } else {
+        const txt = await res.text().catch(() => '');
+        console.warn('Push no enviado (' + res.status + '):', txt.slice(0, 160));
+      }
+    } catch (e) {
+      console.warn('Push desde Cocina falló:', e && e.message ? e.message : e);
+    }
+  }
+
   function updatePushHint() {
     const hint = document.getElementById('push-hint');
     if (!hint) return;
@@ -1361,6 +1481,8 @@
   window.toggleSoldOut = toggleSoldOut;
   window.toggleFavorite = toggleFavorite;
   window.updateOrderStatus = updateOrderStatus;
+  window.enviarPushCocina = enviarPushCocina;
+  window.mintCocinaToken = mintCocinaToken;
   window.dismissOrder = dismissOrder;
   window.sendWhatsAppUpdate = sendWhatsAppUpdate;
   window.checkout = checkout;
@@ -2097,6 +2219,7 @@
     state.adminSubscribed = true;
 
     state.unsubscribeAdmin = db.suscribirATodosLosPedidos((pedidos) => {
+      state.adminOrders = pedidos;
       const cont = $('orders-container');
       // Solo pedidos de este restaurante (los viejos sin campo 'restaurante' son de rogasa)
       const filtered = pedidos.filter(p =>
@@ -2140,6 +2263,9 @@
 
   function updateOrderStatus(id, status) {
     db.actualizarEstado(id, status);
+    // Push al cliente al instante (si tiene notificaciones activadas)
+    const orden = (state.adminOrders || []).find(o => o && o.id === id);
+    if (orden) enviarPushCocina({ ...orden, estado: status });
   }
 
   function dismissOrder(id) {
