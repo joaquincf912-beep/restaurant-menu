@@ -23,6 +23,7 @@
   <link rel="preload" as="image" href="./img/banner_evento.webp" fetchpriority="high">
   <script defer src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
   <script defer src="https://www.gstatic.com/firebasejs/10.12.0/firebase-database-compat.js"></script>
+  <script defer src="https://www.gstatic.com/firebasejs/10.12.0/firebase-messaging-compat.js"></script>
   <style>
     :root {
       --c-bg: #08080a;
@@ -581,6 +582,19 @@
     /* TOGGLES */
     .settings-group { margin-bottom: 32px; }
 
+    /* PUSH NOTIFICATIONS HINT */
+    .push-hint {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      background: var(--c-surface);
+      border: 1px solid var(--c-border);
+      border-left: 3px solid var(--c-gold);
+      border-radius: 12px;
+      padding: 14px;
+      margin-bottom: 20px;
+    }
+
     /* ADMIN PANEL */
     .admin-add-btn {
       display: flex;
@@ -816,6 +830,14 @@
     
     <div id="tracking-content">
       <div class="subtitle">Pedido <span id="track-id" style="font-family:monospace;color:var(--c-gold)"></span></div>
+
+      <div class="push-hint" id="push-hint" style="display:none">
+        <div style="flex:1">
+          <div style="font-weight:600;font-size:14px">Activa las notificaciones</div>
+          <div style="font-size:12px;color:var(--c-text-2)">Te avisamos cuando tu pedido avance, sin tener que mirar la pantalla.</div>
+        </div>
+        <button class="btn-outline" style="width:auto;padding:8px 14px" onclick="requestPushPermission()">Activar</button>
+      </div>
       
       <div class="stepper">
         <div class="step-line"></div>
@@ -1236,8 +1258,85 @@
     adminSubscribed: false,
     reservaType: null,
     unsubscribeTracking: null,
-    unsubscribeAdmin: null
+    unsubscribeAdmin: null,
+    fcmToken: null,
+    fcmEnabled: false,
+    pendingOrderId: null
   };
+
+  // === NOTIFICACIONES PUSH ===
+  const STATUS_LABELS = {
+    recibido: 'Tu pedido ha sido recibido.',
+    cocina: 'Estamos preparando tu pedido.',
+    reparto: 'Tu pedido está en camino.',
+    entregado: 'Tu pedido ha sido entregado. ¡Buen provecho!'
+  };
+  let fcmRequested = false;
+  let lastNotified = '';
+
+  // Pide permiso y registra el token FCM del dispositivo en el pedido (no bloquea el flujo)
+  function ensureFCM(orderId) {
+    state.pendingOrderId = orderId || state.pendingOrderId;
+    if (fcmRequested) return;
+    fcmRequested = true;
+    db.initFCM(handleForegroundPush).then((token) => {
+      state.fcmToken = token || null;
+      state.fcmEnabled = !!token;
+      if (token && state.pendingOrderId) {
+        db.actualizarToken(state.pendingOrderId, token);
+      }
+    });
+  }
+
+  // Push recibido con la app abierta (FCM entrega en primer plano vía onMessage)
+  function handleForegroundPush(payload) {
+    const data = payload.data || {};
+    const estado = data.estado;
+    const body = (payload.notification && payload.notification.body) || STATUS_LABELS[estado] || 'Tu pedido ha cambiado de estado.';
+    showOrderNotification(data.orderId || state.pendingOrderId, estado, body);
+  }
+
+  // Notifica el cambio de estado sin duplicados:
+  // - app visible → toast elegante
+  // - pestaña en segundo plano y FCM no disponible → notificación del sistema
+  // - FCM disponible → el service worker ya muestra la notificación del sistema
+  function showOrderNotification(orderId, estado, body) {
+    const key = (orderId || '') + ':' + (estado || '');
+    if (!estado || key === lastNotified) return;
+    lastNotified = key;
+    if (!document.hidden) {
+      showToast(body, 'success');
+      return;
+    }
+    if (state.fcmEnabled) return;
+    if (typeof Notification !== 'undefined' && Notification.permission === 'granted') {
+      try {
+        const n = new Notification(CONFIG.nombre, {
+          body,
+          icon: './img/logo.webp',
+          badge: './img/logo.webp',
+          tag: orderId,
+          data: { url: trackUrlFor(orderId) }
+        });
+        n.onclick = () => { window.focus(); window.location.href = trackUrlFor(orderId); };
+      } catch (e) { /* el navegador puede bloquear notificaciones en algunos contextos */ }
+    }
+  }
+
+  function updatePushHint() {
+    const hint = document.getElementById('push-hint');
+    if (!hint) return;
+    if (typeof Notification !== 'undefined' && Notification.permission !== 'default') {
+      hint.style.display = 'none';
+      return;
+    }
+    hint.style.display = 'block';
+  }
+
+  function requestPushPermission() {
+    ensureFCM(state.trackingId);
+    updatePushHint();
+  }
 
   window.db = db; // expuesto para el panel admin y soporte
 
@@ -1271,6 +1370,7 @@
   window.deleteDish = deleteDish;
   window.saveConfig = saveConfig;
   window.renderAdminMenu = renderAdminMenu;
+  window.requestPushPermission = requestPushPermission;
 
   // Check URL for tracking
   const urlParams = new URLSearchParams(window.location.search);
@@ -1887,6 +1987,9 @@
     //    (un await antes de window.open ralentiza la transición y puede disparar el bloqueador de popups)
     window.open(`https://wa.me/${CONFIG.whatsapp}?text=${encodeURIComponent(msg)}`, '_blank');
 
+    // Notificaciones push: pedir permiso y registrar el token en el pedido (en segundo plano)
+    ensureFCM(pedido.id);
+
     // 2) Pasar al seguimiento al instante
     state.cart = [];
     updateCartBadge();
@@ -1921,7 +2024,9 @@
     state.unsubscribeTracking = db.suscribirAPedido(state.trackingId, (pedido) => {
       if(!pedido) return;
       updateStepper(pedido.estado);
+      showOrderNotification(pedido.id, pedido.estado, STATUS_LABELS[pedido.estado] || 'Tu pedido ha cambiado de estado.');
     });
+    updatePushHint();
   }
 
   function updateStepper(estado) {
