@@ -1276,9 +1276,12 @@
   let lastNotified = '';
 
   // Pide permiso y registra el token FCM del dispositivo en el pedido (no bloquea el flujo)
-  function ensureFCM(orderId) {
+  function ensureFCM(orderId, done) {
     state.pendingOrderId = orderId || state.pendingOrderId;
-    if (fcmRequested) return;
+    if (fcmRequested) {
+      if (done) done();
+      return;
+    }
     fcmRequested = true;
     db.initFCM(handleForegroundPush).then((token) => {
       state.fcmToken = token || null;
@@ -1286,6 +1289,9 @@
       if (token && state.pendingOrderId) {
         db.actualizarToken(state.pendingOrderId, token);
       }
+      // Re-evaluar el aviso cuando el permiso ya fue decidido (antes se quedaba visible)
+      updatePushHint();
+      if (done) done();
     });
   }
 
@@ -1298,13 +1304,16 @@
   }
 
   // Notifica el cambio de estado sin duplicados:
-  // - app visible → toast elegante
+  // - app visible → toast elegante + sonido
   // - pestaña en segundo plano y FCM no disponible → notificación del sistema
   // - FCM disponible → el service worker ya muestra la notificación del sistema
   function showOrderNotification(orderId, estado, body) {
     const key = (orderId || '') + ':' + (estado || '');
     if (!estado || key === lastNotified) return;
     lastNotified = key;
+    // Sonido: solo cuando esta página entrega la notificación (si FCM/SW la
+    // entrega, el sistema ya reproduce su propio sonido de notificación).
+    if (!(state.fcmEnabled && document.hidden)) playNotifSound();
     if (!document.hidden) {
       showToast(body, 'success');
       return;
@@ -1322,6 +1331,44 @@
         n.onclick = () => { window.focus(); window.location.href = trackUrlFor(orderId); };
       } catch (e) { /* el navegador puede bloquear notificaciones en algunos contextos */ }
     }
+  }
+
+  // === SONIDO DE NOTIFICACIÓN ===
+  // Toque suave de dos notas generado con Web Audio (sin archivos externos).
+  // Se desbloquea con la primera interacción del usuario (política de autoplay).
+  let notifAudioCtx = null;
+  function unlockNotifAudio() {
+    if (notifAudioCtx && notifAudioCtx.state === 'suspended') {
+      notifAudioCtx.resume().catch(() => {});
+    }
+  }
+  document.addEventListener('pointerdown', unlockNotifAudio, { once: true });
+  document.addEventListener('touchstart', unlockNotifAudio, { once: true });
+  document.addEventListener('keydown', unlockNotifAudio, { once: true });
+
+  function playNotifSound() {
+    try {
+      const AC = window.AudioContext || window.webkitAudioContext;
+      if (!AC) return;
+      if (!notifAudioCtx) notifAudioCtx = new AC();
+      if (notifAudioCtx.state === 'suspended') notifAudioCtx.resume().catch(() => {});
+      if (notifAudioCtx.state !== 'running') return;
+      const t0 = notifAudioCtx.currentTime;
+      [880, 1318.51].forEach((freq, i) => {
+        const osc = notifAudioCtx.createOscillator();
+        const gain = notifAudioCtx.createGain();
+        osc.type = 'sine';
+        osc.frequency.value = freq;
+        const t = t0 + i * 0.16;
+        gain.gain.setValueAtTime(0.0001, t);
+        gain.gain.exponentialRampToValueAtTime(0.22, t + 0.025);
+        gain.gain.exponentialRampToValueAtTime(0.0001, t + 0.5);
+        osc.connect(gain);
+        gain.connect(notifAudioCtx.destination);
+        osc.start(t);
+        osc.stop(t + 0.55);
+      });
+    } catch (e) { /* si el navegador bloquea el audio, la notificación visual sigue */ }
   }
 
   // === PUSH DESDE COCINA (sin servidores) ===
@@ -1454,8 +1501,12 @@ pCADw4FUfBnWhpLB3Kjvh7KT3MVfVqjs5J6Gazwy0u1Rm1OTSf+FGAr5hw6WvhrU
   }
 
   function requestPushPermission() {
-    ensureFCM(state.trackingId);
-    updatePushHint();
+    // El aviso desaparece al instante de pulsar "Activar"...
+    const hint = document.getElementById('push-hint');
+    if (hint) hint.style.display = 'none';
+    // ...y se re-evalúa cuando el navegador decide el permiso (si lo descartan,
+    // vuelve a aparecer para poder intentarlo de nuevo).
+    ensureFCM(state.trackingId, updatePushHint);
   }
 
   window.db = db; // expuesto para el panel admin y soporte
@@ -1483,6 +1534,7 @@ pCADw4FUfBnWhpLB3Kjvh7KT3MVfVqjs5J6Gazwy0u1Rm1OTSf+FGAr5hw6WvhrU
   window.updateOrderStatus = updateOrderStatus;
   window.enviarPushCocina = enviarPushCocina;
   window.mintCocinaToken = mintCocinaToken;
+  window.playNotifSound = playNotifSound;
   window.dismissOrder = dismissOrder;
   window.sendWhatsAppUpdate = sendWhatsAppUpdate;
   window.checkout = checkout;
