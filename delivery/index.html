@@ -1316,39 +1316,51 @@
 
   // === SONIDO DE NOTIFICACIÓN ===
   // Toque suave de dos notas generado con Web Audio (sin archivos externos).
-  // Se desbloquea con la primera interacción del usuario (política de autoplay).
+  // El contexto se crea dentro de la primera interacción del usuario (política
+  // de autoplay) y se mantiene listo: los listeners son persistentes, así el
+  // audio queda desbloqueado aunque la notificación llegue más tarde.
   let notifAudioCtx = null;
   function unlockNotifAudio() {
-    if (notifAudioCtx && notifAudioCtx.state === 'suspended') {
-      notifAudioCtx.resume().catch(() => {});
-    }
-  }
-  document.addEventListener('pointerdown', unlockNotifAudio, { once: true });
-  document.addEventListener('touchstart', unlockNotifAudio, { once: true });
-  document.addEventListener('keydown', unlockNotifAudio, { once: true });
-
-  function playNotifSound() {
     try {
       const AC = window.AudioContext || window.webkitAudioContext;
       if (!AC) return;
       if (!notifAudioCtx) notifAudioCtx = new AC();
       if (notifAudioCtx.state === 'suspended') notifAudioCtx.resume().catch(() => {});
-      if (notifAudioCtx.state !== 'running') return;
-      const t0 = notifAudioCtx.currentTime;
-      [880, 1318.51].forEach((freq, i) => {
-        const osc = notifAudioCtx.createOscillator();
-        const gain = notifAudioCtx.createGain();
-        osc.type = 'sine';
-        osc.frequency.value = freq;
-        const t = t0 + i * 0.16;
-        gain.gain.setValueAtTime(0.0001, t);
-        gain.gain.exponentialRampToValueAtTime(0.22, t + 0.025);
-        gain.gain.exponentialRampToValueAtTime(0.0001, t + 0.5);
-        osc.connect(gain);
-        gain.connect(notifAudioCtx.destination);
-        osc.start(t);
-        osc.stop(t + 0.55);
-      });
+    } catch (e) { /* sin audio si el navegador lo bloquea */ }
+  }
+  document.addEventListener('pointerdown', unlockNotifAudio);
+  document.addEventListener('touchstart', unlockNotifAudio);
+  document.addEventListener('keydown', unlockNotifAudio);
+
+  function playNotifTone() {
+    if (!notifAudioCtx || notifAudioCtx.state !== 'running') return;
+    const t0 = notifAudioCtx.currentTime;
+    [880, 1318.51].forEach((freq, i) => {
+      const osc = notifAudioCtx.createOscillator();
+      const gain = notifAudioCtx.createGain();
+      osc.type = 'sine';
+      osc.frequency.value = freq;
+      const t = t0 + i * 0.16;
+      gain.gain.setValueAtTime(0.0001, t);
+      gain.gain.exponentialRampToValueAtTime(0.22, t + 0.025);
+      gain.gain.exponentialRampToValueAtTime(0.0001, t + 0.5);
+      osc.connect(gain);
+      gain.connect(notifAudioCtx.destination);
+      osc.start(t);
+      osc.stop(t + 0.55);
+    });
+  }
+
+  function playNotifSound() {
+    try {
+      unlockNotifAudio(); // crea el contexto si hace falta (queda 'running' si ya hubo interacción)
+      if (!notifAudioCtx) return;
+      if (notifAudioCtx.state === 'suspended') {
+        // El navegador aún no deja sonar: esperamos a que se reanude y tocamos.
+        notifAudioCtx.resume().then(() => playNotifTone()).catch(() => {});
+        return;
+      }
+      playNotifTone();
     } catch (e) { /* si el navegador bloquea el audio, la notificación visual sigue */ }
   }
 
