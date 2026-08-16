@@ -34,9 +34,10 @@ export const db = {
         return 'ord_' + Math.random().toString(36).substring(2, 8);
     },
 
-    async crearPedido({ id, cliente_nombre, ubicacion, telefono, metodo_pago, total_usd, total_bs, items }) {
+    async crearPedido({ id, restaurante, cliente_nombre, ubicacion, telefono, metodo_pago, total_usd, total_bs, items }) {
         const nuevoPedido = {
             id: id || this.generarIdUnico(),
+            restaurante: restaurante || 'rogasa',
             cliente_nombre,
             ubicacion,
             telefono,
@@ -124,5 +125,53 @@ export const db = {
             }
         });
         return () => ordersRef.off('value');
+    },
+
+    // === MULTI-TENANT ===
+    // Cada restaurante vive en /restaurantes/{tenant}/ con su menu y su config.
+    // El menú por defecto del código es el fallback si el nodo aún no existe.
+
+    async obtenerRestaurante(tenant) {
+        if (!database) return null;
+        try {
+            const snapshot = await database.ref('restaurantes/' + tenant).get();
+            if (snapshot.exists()) return snapshot.val();
+        } catch (e) {
+            console.error('Firebase read error (restaurante):', e);
+        }
+        return null;
+    },
+
+    async guardarMenu(tenant, menu) {
+        if (!database) return false;
+        try {
+            await database.ref('restaurantes/' + tenant + '/menu').set(menu);
+            return true;
+        } catch (e) {
+            console.error('Firebase write error (menu):', e);
+            return false;
+        }
+    },
+
+    async guardarConfig(tenant, config) {
+        if (!database) return false;
+        try {
+            await database.ref('restaurantes/' + tenant + '/config').set(config);
+            return true;
+        } catch (e) {
+            console.error('Firebase write error (config):', e);
+            return false;
+        }
+    },
+
+    async eliminarRestaurante(tenant) {
+        if (!database) return false;
+        try {
+            await database.ref('restaurantes/' + tenant).set(null);
+            return true;
+        } catch (e) {
+            console.error('Firebase delete error (restaurante):', e);
+            return false;
+        }
     }
 };
