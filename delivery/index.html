@@ -582,19 +582,6 @@
     /* TOGGLES */
     .settings-group { margin-bottom: 32px; }
 
-    /* PUSH NOTIFICATIONS HINT */
-    .push-hint {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      background: var(--c-surface);
-      border: 1px solid var(--c-border);
-      border-left: 3px solid var(--c-gold);
-      border-radius: 12px;
-      padding: 14px;
-      margin-bottom: 20px;
-    }
-
     /* ADMIN PANEL */
     .admin-add-btn {
       display: flex;
@@ -831,14 +818,6 @@
     <div id="tracking-content">
       <div class="subtitle">Pedido <span id="track-id" style="font-family:monospace;color:var(--c-gold)"></span></div>
 
-      <div class="push-hint" id="push-hint" style="display:none">
-        <div style="flex:1">
-          <div style="font-weight:600;font-size:14px">Activa las notificaciones</div>
-          <div style="font-size:12px;color:var(--c-text-2)">Te avisamos cuando tu pedido avance, sin tener que mirar la pantalla.</div>
-        </div>
-        <button class="btn-outline" style="width:auto;padding:8px 14px" onclick="requestPushPermission()">Activar</button>
-      </div>
-      
       <div class="stepper">
         <div class="step-line"></div>
         <div class="step-line-progress" id="track-progress"></div>
@@ -1275,13 +1254,18 @@
   let fcmRequested = false;
   let lastNotified = '';
 
-  // Pide permiso y registra el token FCM del dispositivo en el pedido (no bloquea el flujo)
-  function ensureFCM(orderId, done) {
+  // Pide el permiso de notificaciones de forma automática (al agregar el primer
+  // plato) y guarda el token del dispositivo en el pedido al confirmar — sin
+  // botones ni avisos en la interfaz. El navegador muestra su diálogo nativo una
+  // sola vez; si el cliente acepta, todas las notificaciones llegan solas.
+  function ensureFCM(orderId) {
     state.pendingOrderId = orderId || state.pendingOrderId;
-    if (fcmRequested) {
-      if (done) done();
+    if (state.fcmToken) {
+      // Ya tenemos token: asegurarlo también a este pedido
+      if (orderId) db.actualizarToken(orderId, state.fcmToken);
       return;
     }
+    if (fcmRequested) return;
     fcmRequested = true;
     db.initFCM(handleForegroundPush).then((token) => {
       state.fcmToken = token || null;
@@ -1289,9 +1273,6 @@
       if (token && state.pendingOrderId) {
         db.actualizarToken(state.pendingOrderId, token);
       }
-      // Re-evaluar el aviso cuando el permiso ya fue decidido (antes se quedaba visible)
-      updatePushHint();
-      if (done) done();
     });
   }
 
@@ -1490,25 +1471,6 @@ pCADw4FUfBnWhpLB3Kjvh7KT3MVfVqjs5J6Gazwy0u1Rm1OTSf+FGAr5hw6WvhrU
     }
   }
 
-  function updatePushHint() {
-    const hint = document.getElementById('push-hint');
-    if (!hint) return;
-    if (typeof Notification !== 'undefined' && Notification.permission !== 'default') {
-      hint.style.display = 'none';
-      return;
-    }
-    hint.style.display = 'block';
-  }
-
-  function requestPushPermission() {
-    // El aviso desaparece al instante de pulsar "Activar"...
-    const hint = document.getElementById('push-hint');
-    if (hint) hint.style.display = 'none';
-    // ...y se re-evalúa cuando el navegador decide el permiso (si lo descartan,
-    // vuelve a aparecer para poder intentarlo de nuevo).
-    ensureFCM(state.trackingId, updatePushHint);
-  }
-
   window.db = db; // expuesto para el panel admin y soporte
 
   // Set up global functions immediately
@@ -1544,7 +1506,7 @@ pCADw4FUfBnWhpLB3Kjvh7KT3MVfVqjs5J6Gazwy0u1Rm1OTSf+FGAr5hw6WvhrU
   window.deleteDish = deleteDish;
   window.saveConfig = saveConfig;
   window.renderAdminMenu = renderAdminMenu;
-  window.requestPushPermission = requestPushPermission;
+
 
   // Check URL for tracking
   const urlParams = new URLSearchParams(window.location.search);
@@ -1939,6 +1901,8 @@ pCADw4FUfBnWhpLB3Kjvh7KT3MVfVqjs5J6Gazwy0u1Rm1OTSf+FGAr5hw6WvhrU
   // CART LOGIC
   function addToCart(id) {
     if(isSoldOut(id)) return;
+    // Pedir notificaciones automáticamente la primera vez que agrega un plato
+    ensureFCM();
     const existing = state.cart.find(i => i.id === id);
     if(existing) existing.q++;
     else {
@@ -2200,7 +2164,6 @@ pCADw4FUfBnWhpLB3Kjvh7KT3MVfVqjs5J6Gazwy0u1Rm1OTSf+FGAr5hw6WvhrU
       updateStepper(pedido.estado);
       showOrderNotification(pedido.id, pedido.estado, STATUS_LABELS[pedido.estado] || 'Tu pedido ha cambiado de estado.');
     });
-    updatePushHint();
   }
 
   function updateStepper(estado) {
@@ -2232,7 +2195,7 @@ pCADw4FUfBnWhpLB3Kjvh7KT3MVfVqjs5J6Gazwy0u1Rm1OTSf+FGAr5hw6WvhrU
   }
 
   function buildOrderCard(p) {
-    const time = new Date(p.creado_en || p.creado_el).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+    const time = new Date(p.creado_en || p.creado_el || Date.now()).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
     return `
       <div class="order-card" id="order-${p.id}">
         <button class="order-close" onclick="dismissOrder('${p.id}')">
@@ -2246,10 +2209,10 @@ pCADw4FUfBnWhpLB3Kjvh7KT3MVfVqjs5J6Gazwy0u1Rm1OTSf+FGAr5hw6WvhrU
         <div class="order-meta">
           Tel: ${p.telefono}<br>
           Dir: ${p.ubicacion}<br>
-          ${(p.metodo_pago || '').toUpperCase()} - $${p.total_usd.toFixed(2)} / Bs. ${(p.total_bs || p.total_usd * 45).toFixed(2)}
+          ${(p.metodo_pago || '').toUpperCase()} - $${((p.total_usd || 0)).toFixed(2)} / Bs. ${((p.total_bs) || (p.total_usd || 0) * 45).toFixed(2)}
         </div>
         <div class="order-items">
-          ${p.items.map(i => `<div class="order-item"><span class="order-item-q">${i.cantidad || i.q || 1}x</span><span>${i.nombre || i.name}</span></div>`).join('')}
+          ${(p.items || []).map(i => `<div class="order-item"><span class="order-item-q">${i.cantidad || i.q || 1}x</span><span>${i.nombre || i.name}</span></div>`).join('')}
         </div>
         <div class="status-buttons">
           <button class="status-btn ${p.estado==='recibido'?'active':''}" onclick="updateOrderStatus('${p.id}', 'recibido')">Recibido</button>
