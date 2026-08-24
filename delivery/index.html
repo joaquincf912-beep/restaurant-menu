@@ -1868,6 +1868,7 @@ pCADw4FUfBnWhpLB3Kjvh7KT3MVfVqjs5J6Gazwy0u1Rm1OTSf+FGAr5hw6WvhrU
   window.onSearchInput = onSearchInput;
   window.addToCart = addToCart;
   window.updateCartQuantity = updateCartQuantity;
+  window.removeFromCart = removeFromCart;
   window.setPayMethod = setPayMethod;
   window.copyPagoMovil = copyPagoMovil;
   window.checkPin = checkPin;
@@ -2102,7 +2103,7 @@ pCADw4FUfBnWhpLB3Kjvh7KT3MVfVqjs5J6Gazwy0u1Rm1OTSf+FGAr5hw6WvhrU
       const isDesay = cat.toLowerCase() === 'desayunos';
       const active = state.activeCategory === cat;
       if (isDesay) {
-        return `<div class="chip ${active ? 'active' : ''}" onclick="setCategory('${cat}')" style="padding:6px 20px;font-size:13px;font-weight:600;background:linear-gradient(135deg,#FF6B2B,#FF5722);color:#fff;border-color:#FF5722;box-shadow:0 2px 12px rgba(255,87,34,0.5)">
+        return `<div class="chip ${active ? 'active' : ''}" onclick="setCategory('${cat}')" style="padding:6px 20px;font-size:13px;font-weight:600;background:linear-gradient(135deg,#FF9800,#FF5722);color:#fff;border-color:#FF5722;box-shadow:0 3px 16px rgba(255,152,0,0.6)">
           <span>${cat}</span>
         </div>`;
       }
@@ -2389,6 +2390,12 @@ pCADw4FUfBnWhpLB3Kjvh7KT3MVfVqjs5J6Gazwy0u1Rm1OTSf+FGAr5hw6WvhrU
     renderCart();
   }
 
+  function removeFromCart(id) {
+    state.cart = state.cart.filter(i => i.id !== id);
+    updateCartBadge();
+    renderCart();
+  }
+
   function setPayMethod(m) {
     state.payMethod = m;
     renderCart();
@@ -2475,6 +2482,9 @@ pCADw4FUfBnWhpLB3Kjvh7KT3MVfVqjs5J6Gazwy0u1Rm1OTSf+FGAr5hw6WvhrU
             <span style="font-size:14px;font-weight:600;min-width:16px;text-align:center">${i.q}</span>
             <button onclick="updateCartQuantity('${i.id}', 1)">
               <svg viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+            </button>
+            <button onclick="removeFromCart('${i.id}')" style="margin-left:6px;color:var(--c-red);padding:4px">
+              <svg viewBox="0 0 24 24" style="width:14px;height:14px"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
             </button>
           </div>
         </div>
